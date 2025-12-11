@@ -1,0 +1,78 @@
+{
+  "expo": {
+  "name": "Ñan Go",
+  "slug": "transportapp-cbba",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": false,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#FFFFFF"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Esta aplicación necesita acceso a la ubicación para mostrar conductores cercanos y calcular rutas.",
+        "NSCameraUsageDescription": "Esta aplicación necesita acceso a la cámara para tomar fotos de documentos.",
+        "NSPhotoLibraryUsageDescription": "Esta aplicación necesita acceso a la galería para subir fotos de documentos."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2E86AB"
+      },
+      "permissions": [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION",
+        "android.permission.CAMERA",
+        "android.permission.READ_EXTERNAL_STORAGE",
+        "android.permission.WRITE_EXTERNAL_STORAGE",
+        "android.permission.RECORD_AUDIO",
+        "android.permission.INTERNET",
+        "android.permission.ACCESS_NETWORK_STATE"
+      ],
+      "package": "com.transportapp.cochabamba",
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      [
+        "expo-barcode-scanner",
+        {
+          "cameraPermission": "Esta aplicación necesita acceso a la cámara para escanear códigos QR de pago."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Esta aplicación necesita acceso a la galería para subir fotos de documentos.",
+          "cameraPermission": "Esta aplicación necesita acceso a la cámara para tomar fotos de documentos."
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Esta aplicación necesita acceso a la ubicación para mostrar conductores cercanos y calcular rutas."
+        }
+      ],
+      "expo-asset",
+      "expo-font"
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "7259b013-82f4-4112-8a1f-d8feed9a6251"
+      }
+    }
+  }
+}
