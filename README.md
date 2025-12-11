@@ -119,19 +119,15 @@ TransportApp/
 - [x] Roles de usuario (Pasajero, Conductor, Admin)
 - [x] Interfaz de mapas con ubicación en tiempo real
 - [x] Sistema de tarifas diferenciadas por tipo de pasajero
-- [x] Métodos de pago (Efectivo y QR)
 - [x] Panel administrativo
 - [x] Gestión de vehículos
-- [x] Scanner de códigos QR
 - [x] Navegación por roles
 
 ### 🔄 En Desarrollo
 - [ ] Integración completa con OpenRouteService
 - [ ] Notificaciones push
-- [ ] Chat entre conductor y pasajero
-- [ ] Sistema de calificaciones
 - [ ] Optimización de rutas
-- [ ] Reportes avanzados
+
 
 ## 📱 Capturas de Pantalla
 
@@ -153,38 +149,10 @@ TransportApp/
 - Botones de aceptar/completar
 
 ### Panel de Administrador
-- Tres pestañas: Usuarios, Vehículos, Viajes
+- Tres pestañas: Usuarios, Vehículos, Lineas
 - Gestión completa de usuarios
 - Estados y acciones en tiempo real
 
-## 🧪 Testing
-
-### Datos de Prueba
-Crear usuarios con estos datos para testing:
-
-```javascript
-// Pasajero
-Email: pasajero@test.com
-Password: 123456
-
-// Conductor
-Email: conductor@test.com
-Password: 123456
-
-// Admin
-Email: admin@test.com
-Password: 123456
-```
-
-### QR de Prueba
-Para testing de pagos QR, usar este código:
-```json
-{
-  "type": "transport_payment",
-  "amount": 2.5,
-  "reference": "PAY_TEST_001"
-}
-```
 
 ## 🔧 Configuración
 
@@ -203,21 +171,6 @@ El proyecto usa las siguientes APIs:
 - [`FIREBASE_SETUP.md`](FIREBASE_SETUP.md) - Configuración detallada de Firebase
 - [`DEVELOPMENT_GUIDE.md`](DEVELOPMENT_GUIDE.md) - Guía de desarrollo y testing
 
-## 🐛 Solución de Problemas
-
-### Problemas Comunes
-
-1. **Error de permisos de ubicación**
-   - Verificar permisos en configuración del dispositivo
-   - Reiniciar la aplicación
-
-2. **Firebase no conecta**
-   - Verificar configuración en `firebaseConfig.js`
-   - Comprobar reglas de Firestore
-
-3. **QR Scanner no funciona**
-   - Verificar permisos de cámara
-   - Usar códigos QR con formato correcto
 
 ## 🎯 Características del Transporte Público Boliviano
 
@@ -226,41 +179,5 @@ La aplicación está diseñada específicamente para el contexto boliviano:
 - **Tarifas oficiales** según regulaciones de Cochabamba
 - **Tipos de pasajero** según descuentos legales
 - **Interfaz en español** con terminología local
-- **Métodos de pago** adaptados al mercado local
-
-## 👨‍💻 Desarrollo
-
-### Estructura de Desarrollo por Etapas
-
-1. **ETAPA 1**: Configuración base y Firebase
-2. **ETAPA 2**: Autenticación y registro
-3. **ETAPA 3**: Pantallas principales por rol
-4. **ETAPA 4**: Sistema de pagos y QR
-5. **ETAPA 5**: Navegación e integración
-6. **ETAPA 6**: Documentación y testing
-
-### Próximas Mejoras
-
-- Integración completa con OpenRouteService para rutas
-- Sistema de notificaciones push
-- Chat en tiempo real
-- Calificaciones y reseñas
-- Análisis de datos y reportes avanzados
-- Optimización de performance
-
-## 📄 Licencia
-
-Este proyecto es parte de un trabajo académico para la Universidad Privada Domingo Savio (UPDS) - Aplicaciones Móviles I.
-
-## 👥 Contribución
-
-Este es un proyecto académico. Para contribuciones:
-1. Fork el proyecto
-2. Crear branch para feature (`git checkout -b feature/AmazingFeature`)
-3. Commit cambios (`git commit -m 'Add some AmazingFeature'`)
-4. Push al branch (`git push origin feature/AmazingFeature`)
-5. Abrir Pull Request
-
----
 
 **Desarrollado con ❤️ para el transporte público de Cochabamba, Bolivia**
