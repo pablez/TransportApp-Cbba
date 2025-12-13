@@ -24,7 +24,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
 import { PASSENGER_TYPES } from '../../utils/constants';
-import { db } from '../config/firebase';
+import { db } from '../../config/firebase';
 
 const PassengerScreen = () => {
   const [location, setLocation] = useState(null);
