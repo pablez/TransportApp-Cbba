@@ -17,7 +17,7 @@ import {
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { USER_ROLES, PASSENGER_TYPES } from '../utils/constants';
 import { isValidEmail, isValidPhone } from '../utils/helpers';
 

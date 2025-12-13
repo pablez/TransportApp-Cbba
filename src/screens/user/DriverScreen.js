@@ -17,7 +17,7 @@ import LocationService from '../services/LocationService';
 import { doc, getDoc } from 'firebase/firestore';
 import { LocationService as FirestoreLocationService } from '../services/firestoreService';
 import { Ionicons } from '@expo/vector-icons';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../../context/AuthContext';
 import { db } from '../config/firebase';
 
 const DriverScreen = () => {
