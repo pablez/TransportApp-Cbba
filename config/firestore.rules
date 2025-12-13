@@ -1,0 +1,70 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Usuarios: lectura si eres el mismo usuario o si eres admin; crear/editar solo por el propio usuario
+    match /users/{userId} {
+      // Lectura: el dueño puede leer su doc; además permitimos que un usuario con role=='admin'
+      // (almacenado en su propio documento users/{uid}) lea otros usuarios. Para evitar errores
+      // cuando el documento admin no exista, comprobamos exists(...) antes de acceder a .data.
+      allow read: if request.auth != null && (
+        request.auth.uid == userId ||
+        (
+          // comprobar existencia y luego comparar el campo role a 'admin'
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          // aceptar tanto 'admin' como 'ADMIN' para evitar problemas por mayúsculas
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
+        )
+      );
+
+      // Crear solo por el propio usuario autenticado.
+      // Permitir update/delete al propio usuario OR a un admin (role == 'admin'|'ADMIN').
+      // Esto permite que administradores aprueben/rechacen cuentas desde la app.
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update, delete: if request.auth != null && (
+        request.auth.uid == userId || (
+          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
+        )
+      );
+    }
+
+    // Viajes: cualquiera autenticado puede crear; solo pasajero/chofer pueden leer/editar su viaje
+    match /trips/{tripId} {
+      allow create: if request.auth != null && request.resource.data.passengerId is string;
+      allow read, update, delete: if request.auth != null &&
+        ((resource.data.passengerId == request.auth.uid) || (resource.data.driverId == request.auth.uid));
+    }
+
+    // Ubicaciones de conductores
+    match /driverLocations/{driverId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == driverId;
+    }
+
+    // Pagos: solo propietario puede crear/leer/editar sus pagos
+    match /payments/{paymentId} {
+      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+    }
+
+    // Rutas (líneas) - lectura SIEMPRE permitida para invitados, escrituras sólo por admins
+    match /routes/{routeId} {
+      // TEMPORALMENTE: Permitir lectura a todos para diagnosticar el problema
+      allow read: if true;
+      allow create, update, delete: if request.auth != null && (
+        // comprobar que el creador es admin según su documento users/{uid}
+        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
+      );
+    }
+
+    // Vehículos: lectura autenticada; escritura solo si el request.resource.data.driverId coincide
+    match /vehicles/{vehicleId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.resource.data.driverId == request.auth.uid;
+    }
+
+  }
+}

@@ -13,6 +13,7 @@ export const useAdminMapLogic = () => {
 
   // Referencias
   const webViewRef = useRef(null);
+  const pendingLocationRef = useRef(null);
 
   // Obtener ubicación GPS
   const getCurrentLocation = async () => {
@@ -114,12 +115,53 @@ export const useAdminMapLogic = () => {
         }
       }
     } else {
-      console.warn('⚠️ WebView no disponible para updateLocation:', { 
-        hasWebView: !!webViewRef.current, 
-        mapReady 
-      });
+      // Guardar la ubicación pendiente para enviarla cuando el mapa esté listo
+      // Normalizar/validar números para evitar concatenaciones o valores inválidos
+      let latNum = Number(latitude);
+      let lngNum = Number(longitude);
+
+      if (isNaN(latNum) || Math.abs(latNum) > 90) {
+        if (location && typeof location.latitude === 'number') {
+          console.warn('⚠️ latitude inválida detectada, usando fallback location.latitude');
+          latNum = location.latitude;
+        }
+      }
+
+      if (isNaN(lngNum) || Math.abs(lngNum) > 180) {
+        if (location && typeof location.longitude === 'number') {
+          console.warn('⚠️ longitude inválida detectada, usando fallback location.longitude');
+          lngNum = location.longitude;
+        }
+      }
+
+      pendingLocationRef.current = { latitude: latNum, longitude: lngNum };
+      // Normalizar keys inesperadas antes de loguear (defensa contra bundles antiguos)
+      const _pending = pendingLocationRef.current ? { ...pendingLocationRef.current } : null;
+      if (_pending && Object.prototype.hasOwnProperty.call(_pending, 'longiitude')) {
+        _pending.longitude = _pending.longiitude;
+        delete _pending.longiitude;
+      }
+      console.log('ℹ️ WebView pendiente:', JSON.stringify({ hasWebView: !!webViewRef.current, mapReady, pending: _pending }));
     }
   };
+
+  // Enviar ubicación pendiente cuando el mapa pase a estar listo
+  useEffect(() => {
+    if (mapReady && pendingLocationRef.current && webViewRef.current) {
+      const { latitude, longitude } = pendingLocationRef.current;
+      pendingLocationRef.current = null;
+      (async () => {
+        try {
+          const address = await getAddressFromCoordinates(latitude, longitude);
+          const script = `if (window.updateLocation) { window.updateLocation(${latitude}, ${longitude}, "${address}"); }`;
+          webViewRef.current.postMessage(script);
+          console.log('✅ Ubicación pendiente enviada al WebView tras mapReady:', { latitude, longitude });
+        } catch (e) {
+          console.error('❌ Error enviando ubicación pendiente tras mapReady:', e);
+        }
+      })();
+    }
+  }, [mapReady]);
 
   // Centrar en la ubicación actual
   const centerOnLocation = () => {

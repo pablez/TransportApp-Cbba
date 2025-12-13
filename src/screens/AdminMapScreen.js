@@ -24,6 +24,7 @@ const AdminMapScreen = ({ navigation, route }) => {
   const [routeData, setRouteData] = useState(null); // Para manejar rutas origen-destino
   const [pendingCustomRoute, setPendingCustomRoute] = useState(null); // Para guardar customRoute hasta que el mapa esté listo
   const webViewRef = useRef(null);
+  const pendingLocationRef = useRef(null);
 
   // Obtener tipo de ruta de los parámetros
   const routeType = route?.params?.routeType || null;
@@ -287,12 +288,53 @@ const AdminMapScreen = ({ navigation, route }) => {
         }
       }
     } else {
-      console.warn('⚠️ WebView no disponible para updateLocation:', { 
-        hasWebView: !!webViewRef.current, 
-        mapReady 
-      });
+      // Guardar para enviar cuando el mapa esté listo
+      // Normalizar/validar para evitar valores inválidos causados por concatenaciones
+      let latNum = Number(latitude);
+      let lngNum = Number(longitude);
+
+      if (isNaN(latNum) || Math.abs(latNum) > 90) {
+        if (location && typeof location.latitude === 'number') {
+          console.warn('⚠️ latitude inválida detectada en AdminMapScreen, usando fallback location.latitude');
+          latNum = location.latitude;
+        }
+      }
+
+      if (isNaN(lngNum) || Math.abs(lngNum) > 180) {
+        if (location && typeof location.longitude === 'number') {
+          console.warn('⚠️ longitude inválida detectada en AdminMapScreen, usando fallback location.longitude');
+          lngNum = location.longitude;
+        }
+      }
+
+      pendingLocationRef.current = { latitude: latNum, longitude: lngNum };
+      // Normalizar keys inesperadas antes de loguear (defensa contra bundles antiguos)
+      const _pending = pendingLocationRef.current ? { ...pendingLocationRef.current } : null;
+      if (_pending && Object.prototype.hasOwnProperty.call(_pending, 'longiitude')) {
+        _pending.longitude = _pending.longiitude;
+        delete _pending.longiitude;
+      }
+      console.log('ℹ️ WebView pendiente:', JSON.stringify({ hasWebView: !!webViewRef.current, mapReady, pending: _pending }));
     }
   };
+
+  // Enviar ubicación pendiente cuando el mapa se marque como listo
+  useEffect(() => {
+    if (mapReady && pendingLocationRef.current && webViewRef.current) {
+      const { latitude, longitude } = pendingLocationRef.current;
+      pendingLocationRef.current = null;
+      (async () => {
+        try {
+          const address = await getAddressFromCoordinates(latitude, longitude);
+          const script = `if (window.updateLocation) { window.updateLocation(${latitude}, ${longitude}, "${address}"); }`;
+          webViewRef.current.postMessage(script);
+          console.log('✅ Ubicación pendiente enviada al WebView tras mapReady:', { latitude, longitude });
+        } catch (e) {
+          console.error('❌ Error enviando ubicación pendiente tras mapReady:', e);
+        }
+      })();
+    }
+  }, [mapReady]);
 
   // 🌍 Obtener dirección desde coordenadas usando OpenRouteService API
   const getAddressFromCoordinates = async (latitude, longitude) => {
@@ -723,7 +765,10 @@ const AdminMapScreen = ({ navigation, route }) => {
                     console.log('✅ Mapa cargado correctamente');
                     
                     if (window.ReactNativeWebView) {
-                        window.ReactNativeWebView.postMessage('mapReady');
+                        if (!window.__mapReadySent) {
+                          window.__mapReadySent = true;
+                          window.ReactNativeWebView.postMessage('mapReady');
+                        }
                       }
                 }
             });
@@ -734,8 +779,11 @@ const AdminMapScreen = ({ navigation, route }) => {
                     document.getElementById('loading').style.display = 'none';
                     console.log('⚠️ Mapa cargado por timeout');
                     if (window.ReactNativeWebView) {
-                        window.ReactNativeWebView.postMessage('mapReady');
-                    }
+                            if (!window.__mapReadySent) {
+                              window.__mapReadySent = true;
+                              window.ReactNativeWebView.postMessage('mapReady');
+                            }
+                        }
                 }
             }, 3000);
 

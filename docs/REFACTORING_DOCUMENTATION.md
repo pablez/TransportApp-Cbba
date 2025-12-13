@@ -1,3 +1,4 @@
+```markdown
 # Refactorización de GuestScreen.js - Eliminación del Código Espaguetti
 
 ## 📋 Resumen
@@ -12,13 +13,6 @@ El archivo original `GuestScreen.js` contenía más de **2030 líneas** de códi
 - **Testing imposible**: Lógica fuertemente acoplada
 - **Reutilización nula**: Funcionalidades no extraíbles
 - **Debugging complejo**: Estado y efectos mezclados
-
-### 📊 Métricas del Problema
-- **Líneas de código**: 2030+
-- **Responsabilidades**: 8+ diferentes en un componente
-- **Estados mezclados**: 15+ variables de estado
-- **Efectos sin separar**: 5+ useEffect complejos
-- **HTML embebido**: 400+ líneas de string template
 
 ## ✅ Solución Implementada - Arquitectura Modular
 
@@ -123,7 +117,7 @@ src/
 
 | Aspecto | Antes (Código Espaguetti) | Después (Modular) |
 |---------|-------------------------|-------------------|
-| **Líneas por archivo** | 2030+ | <200 promedio |
+| **Líneas de código** | 2030+ | <200 promedio |
 | **Responsabilidades** | 8+ mezcladas | 1 por componente |
 | **Testabilidad** | Imposible | 100% testeable |
 | **Mantenimiento** | Muy difícil | Fácil |
@@ -168,7 +162,7 @@ const {
   mapReady={mapReady}
   webViewRef={webViewRef}
   onMessage={handleWebViewMessage}
-/>
+/> 
 ```
 
 ## 🛠️ Próximos Pasos
@@ -205,3 +199,5 @@ La refactorización transforma **2030+ líneas de código espaguetti** en una **
 - ✅ **Performance optimizable**
 
 **¡El código espaguetti ha sido completamente eliminado!** 🍝 ➡️ 🏗️
+
+```
