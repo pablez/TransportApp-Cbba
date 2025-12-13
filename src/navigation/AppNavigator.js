@@ -27,8 +27,8 @@ import LocationSearchScreen from '../screens/search/LocationSearchScreen';
 import UserApprovalScreen from '../screens/admin/UserApprovalScreen';
 import PaymentScreen from '../screens/user/PaymentScreen';
 import SimpleTestScreen from '../screens/tests/SimpleTestScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
-import RouteSearchScreen from '../screens/RouteSearchScreen';
+import EditProfileScreen from '../screens/user/EditProfileScreen';
+import RouteSearchScreen from '../screens/search/RouteSearchScreen';
 
 const Drawer = createDrawerNavigator();
 
