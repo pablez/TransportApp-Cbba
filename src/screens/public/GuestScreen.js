@@ -15,7 +15,7 @@ import RouteDetailsModal from '../../components/modals/RouteDetailsModal';
 // Hooks y utilidades
 import { useMapLogic } from '../../hooks/useMapLogic';
 import { generateMapHTML } from '../../components/map/MapHTML';
-import { MAP_CONFIG, MESSAGE_TYPES } from '../constants/mapConstants';
+import { MAP_CONFIG, MESSAGE_TYPES } from '../../constants/mapConstants';
 import PublicMapScreen from './PublicMapScreen';
 
 const GuestScreen = ({ navigation }) => {
