@@ -3,18 +3,18 @@ import { SafeAreaView, View, Alert, ActivityIndicator, Text, StyleSheet } from '
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Componentes modulares
-import AppHeader from '../components/AppHeader';
-import MapWebView from '../components/map/MapWebView';
-import RouteSelectionPanel from '../components/map/RouteSelectionPanel';
-import FloatingActionButtons from '../components/map/FloatingActionButtons';
-import MapTypeSelector from '../components/modals/MapTypeSelector';
-import RouteConfirmModal from '../components/modals/RouteConfirmModal';
-import GuestWelcomeModal from '../components/modals/GuestWelcomeModal';
-import RouteDetailsModal from '../components/modals/RouteDetailsModal';
+import AppHeader from '../../components/AppHeader';
+import MapWebView from '../../components/map/MapWebView';
+import RouteSelectionPanel from '../../components/map/RouteSelectionPanel';
+import FloatingActionButtons from '../../components/map/FloatingActionButtons';
+import MapTypeSelector from '../../components/modals/MapTypeSelector';
+import RouteConfirmModal from '../../components/modals/RouteConfirmModal';
+import GuestWelcomeModal from '../../components/modals/GuestWelcomeModal';
+import RouteDetailsModal from '../../components/modals/RouteDetailsModal';
 
 // Hooks y utilidades
-import { useMapLogic } from '../hooks/useMapLogic';
-import { generateMapHTML } from '../components/map/MapHTML';
+import { useMapLogic } from '../../hooks/useMapLogic';
+import { generateMapHTML } from '../../components/map/MapHTML';
 import { MAP_CONFIG, MESSAGE_TYPES } from '../constants/mapConstants';
 import PublicMapScreen from './PublicMapScreen';
 
