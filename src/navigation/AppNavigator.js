@@ -7,26 +7,26 @@ import { USER_ROLES } from '../utils/constants';
 import DrawerContent from '../components/DrawerContent';
 
 // Pantallas de autenticación
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import GuestScreen from '../screens/GuestScreen';
-import PublicRoutesScreen from '../screens/PublicRoutesScreen';
-import PublicMapScreen from '../screens/PublicMapScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import GuestScreen from '../screens/public/GuestScreen';
+import PublicRoutesScreen from '../screens/public/PublicRoutesScreen';
+import PublicMapScreen from '../screens/public/PublicMapScreen';
 import BottomTabs from './BottomTabs';
 
 // Pantallas principales
-import PassengerScreen from '../screens/PassengerScreen';
-import DriverScreen from '../screens/DriverScreen';
-import AdminScreen from '../screens/AdminScreen';
-import AdminDashboardScreen from '../screens/AdminDashboardScreen';
-import AdminMapScreen from '../screens/AdminMapScreenRefactored';
-import EditMapScreen from '../screens/EditMapScreen';
-import AdminLinesScreen from '../screens/AdminLinesScreen';
+import PassengerScreen from '../screens/user/PassengerScreen';
+import DriverScreen from '../screens/user/DriverScreen';
+import AdminScreen from '../screens/admin/AdminScreen';
+import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
+import AdminMapScreen from '../screens/admin/AdminMapScreenRefactored';
+import EditMapScreen from '../screens/maps/EditMapScreen';
+import AdminLinesScreen from '../screens/admin/AdminLinesScreen';
 import AdminLinesScreenRefactored from '../screens/admin/AdminLinesScreenRefactored';
-import LocationSearchScreen from '../screens/LocationSearchScreen';
-import UserApprovalScreen from '../screens/UserApprovalScreen';
-import PaymentScreen from '../screens/PaymentScreen';
-import SimpleTestScreen from '../screens/SimpleTestScreen';
+import LocationSearchScreen from '../screens/search/LocationSearchScreen';
+import UserApprovalScreen from '../screens/admin/UserApprovalScreen';
+import PaymentScreen from '../screens/user/PaymentScreen';
+import SimpleTestScreen from '../screens/tests/SimpleTestScreen';
 import EditProfileScreen from '../screens/EditProfileScreen';
 import RouteSearchScreen from '../screens/RouteSearchScreen';
 
@@ -269,3 +269,4 @@ const AppNavigator = () => {
 };
 
 export default AppNavigator;
+
