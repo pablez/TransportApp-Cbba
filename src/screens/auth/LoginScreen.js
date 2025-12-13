@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useAuth } from '../../context/AuthContext';
-import { isValidEmail } from '../utils/helpers';
+import { isValidEmail } from '../../utils/helpers';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
