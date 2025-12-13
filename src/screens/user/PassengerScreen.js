@@ -23,7 +23,7 @@ import { LocationService as FirestoreLocationService } from '../services/firesto
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useAuth } from '../../context/AuthContext';
-import { PASSENGER_TYPES } from '../utils/constants';
+import { PASSENGER_TYPES } from '../../utils/constants';
 import { db } from '../config/firebase';
 
 const PassengerScreen = () => {
