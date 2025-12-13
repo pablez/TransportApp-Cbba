@@ -11,8 +11,8 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
-import LocationService from '../services/LocationService';
-import { LocationService as FirestoreLocationService } from '../services/firestoreService';
+import LocationService from '../../services/LocationService';
+import { LocationService as FirestoreLocationService } from '../../services/firestoreService';
 
 const AdminMapScreen = ({ navigation, route }) => {
   const [location, setLocation] = useState(null);

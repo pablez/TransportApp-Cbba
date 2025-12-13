@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, ActivityIndicator, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, onSnapshot, where, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../../config/firebase';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const PublicRoutesScreen = ({ navigation }) => {

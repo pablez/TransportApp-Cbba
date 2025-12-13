@@ -12,8 +12,8 @@ import {
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import * as Location from 'expo-location';
-import HeaderWithDrawer from '../components/HeaderWithDrawer';
-import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../data/routes';
+import HeaderWithDrawer from '../../components/HeaderWithDrawer';
+import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../../data/routes';
 
 const AdminMapScreen = ({ navigation, route }) => {
   // ✅ Estados bien organizados

@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { collection, query, where, getDocs } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { useAuth } from '../context/AuthContext';
-import { USER_ROLES } from '../utils/constants';
-import HeaderWithDrawer from '../components/HeaderWithDrawer';
+import { db } from '../../config/firebase';
+import { useAuth } from '../../context/AuthContext';
+import { USER_ROLES } from '../../utils/constants';
+import HeaderWithDrawer from '../../components/HeaderWithDrawer';
 
 const AdminDashboardScreen = ({ navigation }) => {
   const [pendingUsers, setPendingUsers] = useState([]);

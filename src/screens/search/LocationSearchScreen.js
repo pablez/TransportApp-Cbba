@@ -10,7 +10,7 @@ import {
   Alert
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import LocationService from '../services/LocationService';
+import LocationService from '../../services/LocationService';
 
 const LocationSearchScreen = ({ navigation, route }) => {
   const [searchQuery, setSearchQuery] = useState('');

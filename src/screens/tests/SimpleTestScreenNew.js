@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert, SafeAreaView } from 'react-native';
-import { useAuth } from '../context/AuthContext';
-import HeaderWithDrawer from '../components/HeaderWithDrawer';
+import { useAuth } from '../../context/AuthContext';
+import HeaderWithDrawer from '../../components/HeaderWithDrawer';
 
 const SimpleTestScreen = () => {
   const { user, logout, userRole } = useAuth();

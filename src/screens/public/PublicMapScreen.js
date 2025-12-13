@@ -12,11 +12,11 @@ import {
   FlatList
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import MapWebView from '../components/MapWebView';
-import MapControls from '../components/MapControls';
-import SelectionPanel from '../components/SelectionPanel';
+import MapWebView from '../../components/MapWebView';
+import MapControls from '../../components/MapControls';
+import SelectionPanel from '../../components/SelectionPanel';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import usePublicMapLogic from '../hooks/usePublicMapLogic';
+import usePublicMapLogic from '../../hooks/usePublicMapLogic';
 
 const PublicMapScreen = ({ navigation, route }) => {
   const webViewRef = useRef(null);

@@ -9,9 +9,9 @@ import {
   Modal
 } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
-import QRScannerComponent from '../components/QRScannerComponent';
-import { PASSENGER_TYPES, PAYMENT_METHODS } from '../utils/constants';
-import { calculateFare } from '../utils/helpers';
+import QRScannerComponent from '../../components/QRScannerComponent';
+import { PASSENGER_TYPES, PAYMENT_METHODS } from '../../utils/constants';
+import { calculateFare } from '../../utils/helpers';
 
 const PaymentScreen = ({ visible, onClose, onPaymentComplete, tripDetails }) => {
   const [passengerType, setPassengerType] = useState('GENERAL');

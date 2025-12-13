@@ -5,10 +5,10 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import PublicRoutesScreen from '../screens/PublicRoutesScreen';
-import PublicMapScreen from '../screens/PublicMapScreen';
-import GuestScreen from '../screens/GuestScreen';
-import LoginScreen from '../screens/LoginScreen';
+import PublicRoutesScreen from '../screens/public/PublicRoutesScreen';
+import PublicMapScreen from '../screens/public/PublicMapScreen';
+import GuestScreen from '../screens/public/GuestScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -77,3 +77,4 @@ const BottomTabs = () => {
 };
 
 export default BottomTabs;
+

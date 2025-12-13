@@ -7,7 +7,7 @@ import {
   ActivityIndicator,
   Text
 } from 'react-native';
-import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../data/routes';
+import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../../data/routes';
 import {
   AdminHeader,
   AdminSearchBar,
@@ -16,7 +16,7 @@ import {
   AdminMapControls,
   FloatingSearchButton,
   useAdminMapLogic
-} from '../components/admin';
+} from '../../components/admin';
 
 const AdminMapScreen = ({ navigation, route }) => {
   // Hook personalizado con toda la lógica del mapa

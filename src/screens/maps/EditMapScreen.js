@@ -17,7 +17,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import * as Location from 'expo-location';
 import { doc, updateDoc, getDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
+import { db } from '../../config/firebase';
 
 const EditMapScreen = ({ navigation, route }) => {
   const [location, setLocation] = useState(null);

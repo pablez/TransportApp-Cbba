@@ -7,30 +7,50 @@ import { USER_ROLES } from '../utils/constants';
 import DrawerContent from '../components/DrawerContent';
 
 // Pantallas de autenticación
-import LoginScreen from '../screens/LoginScreen';
-import RegisterScreen from '../screens/RegisterScreen';
-import GuestScreen from '../screens/GuestScreen';
-import PublicRoutesScreen from '../screens/PublicRoutesScreen';
-import PublicMapScreen from '../screens/PublicMapScreen';
+import LoginScreen from '../screens/auth/LoginScreen';
+import RegisterScreen from '../screens/auth/RegisterScreen';
+import GuestScreen from '../screens/public/GuestScreen';
+import PublicRoutesScreen from '../screens/public/PublicRoutesScreen';
+import PublicMapScreen from '../screens/public/PublicMapScreen';
 import BottomTabs from './BottomTabs';
 
 // Pantallas principales
-import PassengerScreen from '../screens/PassengerScreen';
-import DriverScreen from '../screens/DriverScreen';
-import AdminScreen from '../screens/AdminScreen';
-import AdminDashboardScreen from '../screens/AdminDashboardScreen';
-import AdminMapScreen from '../screens/AdminMapScreenRefactored';
-import EditMapScreen from '../screens/EditMapScreen';
-import AdminLinesScreen from '../screens/AdminLinesScreen';
+import PassengerScreen from '../screens/user/PassengerScreen';
+import DriverScreen from '../screens/user/DriverScreen';
+import AdminScreen from '../screens/admin/AdminScreen';
+import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
+import AdminMapScreen from '../screens/admin/AdminMapScreenRefactored';
+import EditMapScreen from '../screens/maps/EditMapScreen';
 import AdminLinesScreenRefactored from '../screens/admin/AdminLinesScreenRefactored';
-import LocationSearchScreen from '../screens/LocationSearchScreen';
-import UserApprovalScreen from '../screens/UserApprovalScreen';
-import PaymentScreen from '../screens/PaymentScreen';
-import SimpleTestScreen from '../screens/SimpleTestScreen';
-import EditProfileScreen from '../screens/EditProfileScreen';
-import RouteSearchScreen from '../screens/RouteSearchScreen';
+import LocationSearchScreen from '../screens/search/LocationSearchScreen';
+import UserApprovalScreen from '../screens/admin/UserApprovalScreen';
+import PaymentScreen from '../screens/user/PaymentScreen';
+import SimpleTestScreen from '../screens/tests/SimpleTestScreen';
+import EditProfileScreen from '../screens/user/EditProfileScreen';
+import RouteSearchScreen from '../screens/search/RouteSearchScreen';
 
 const Drawer = createDrawerNavigator();
+
+// Mapeo de nombres de pantalla a rutas de archivo (útil para debugging)
+const SCREEN_PATHS = {
+  Login: 'src/screens/auth/LoginScreen.js',
+  MainTabs: 'src/navigation/BottomTabs.js',
+  Guest: 'src/screens/public/GuestScreen.js',
+  PublicRoutes: 'src/screens/public/PublicRoutesScreen.js',
+  PublicMap: 'src/screens/public/PublicMapScreen.js',
+  Register: 'src/screens/auth/RegisterScreen.js',
+  EditProfile: 'src/screens/user/EditProfileScreen.js',
+  AdminMap: 'src/screens/admin/AdminMapScreenRefactored.js',
+  AdminDashboard: 'src/screens/admin/AdminDashboardScreen.js',
+  AdminLines: 'src/screens/admin/AdminLinesScreenRefactored.js',
+  EditMap: 'src/screens/maps/EditMapScreen.js',
+  UserApproval: 'src/screens/admin/UserApprovalScreen.js',
+  LocationSearch: 'src/screens/search/LocationSearchScreen.js',
+  PassengerMain: 'src/screens/user/PassengerScreen.js',
+  RouteSearch: 'src/screens/search/RouteSearchScreen.js',
+  Payment: 'src/screens/user/PaymentScreen.js',
+  DriverMain: 'src/screens/user/DriverScreen.js'
+};
 
 const AppNavigator = () => {
   const { user, userRole, isAdmin, loading } = useAuth();
@@ -173,6 +193,8 @@ const AppNavigator = () => {
         try {
           const active = getActiveRouteName(state);
           console.log('📍 Screen activa:', active);
+          const screenPath = SCREEN_PATHS[active] || 'ruta desconocida';
+          console.log('📁 Ruta del screen:', screenPath);
         } catch (e) {
           console.log('📍 Screen activa: (error al obtener)', e);
         }
@@ -215,8 +237,7 @@ const AppNavigator = () => {
             {isAdmin && (
               <>
                 <Drawer.Screen name="AdminDashboard" component={AdminDashboardScreen} />
-                <Drawer.Screen name="AdminLines" component={AdminLinesScreen} />
-                <Drawer.Screen name="AdminLinesNew" component={AdminLinesScreenRefactored} options={{ title: 'Líneas (Nuevo)' }} />
+                <Drawer.Screen name="AdminLines" component={AdminLinesScreenRefactored} />
                 {/* Pantalla dedicada para edición de rutas desde AdminLines */}
                 <Drawer.Screen name="EditMap" component={EditMapScreen} options={{ drawerItemStyle: { display: 'none' } }} />
                 {/* LocationSearch (registrado en la sección compartida más abajo) */}
@@ -269,3 +290,4 @@ const AppNavigator = () => {
 };
 
 export default AppNavigator;
+

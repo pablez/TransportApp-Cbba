@@ -17,6 +17,8 @@ import ResponsiveLayout, { ResponsiveGrid, ResponsiveRow } from '../../component
 import ColorSwatch from '../../components/admin/ColorSwatch';
 import RouteCard from '../../components/admin/RouteCard';
 import PointFormModal from '../../components/admin/PointFormModal';
+import AdminLinesHeader from '../../components/admin/AdminLinesHeader';
+import RouteList from '../../components/admin/RouteList';
 
 // Hooks personalizados
 import useRouteManagement from '../../hooks/useRouteManagement';
@@ -197,32 +199,11 @@ const AdminLinesScreenRefactored = ({ navigation, route }) => {
 
   return (
     <ResponsiveLayout>
-      {/* Header flotante */}
-      <TouchableOpacity
-        style={[styles.floatingButton, { top: isTablet ? 24 : 16 }]}
-        onPress={() => navigation.openDrawer && navigation.openDrawer()}
-        accessibilityLabel="Abrir menú"
-      >
-        <Ionicons name="menu" size={25} color="#fff" />
-      </TouchableOpacity>
-
-      {/* Header principal */}
-      <View style={styles.header}>
-        <ResponsiveRow align="center">
-          <Ionicons name="bus" size={isTablet ? 32 : 28} color="#1976D2" />
-          <View style={styles.headerText}>
-            <Text style={[styles.headerTitle, { fontSize: isTablet ? 24 : 20 }]}>
-              Administrar Líneas
-            </Text>
-            <Text style={[styles.headerSubtitle, { fontSize: isTablet ? 14 : 12 }]}>
-              Crea, edita y muestra las rutas del sistema
-            </Text>
-          </View>
-        </ResponsiveRow>
-      </View>
+      {/* Header principal via component */}
+      <AdminLinesHeader onOpenMenu={() => navigation.openDrawer && navigation.openDrawer()} title="Administrar Líneas" />
 
       {!isEditing ? (
-        // Vista de lista de rutas
+        // Vista de lista de rutas (delegada a RouteList)
         <View style={styles.listContainer}>
           {/* Botón crear línea */}
           <TouchableOpacity 
@@ -248,46 +229,36 @@ const AdminLinesScreenRefactored = ({ navigation, route }) => {
             </TouchableOpacity>
           </ResponsiveGrid>
 
-          {/* Lista de rutas */}
-          <FlatList
-            data={persistedRoutes}
-            keyExtractor={item => item.id}
-            renderItem={({ item }) => (
-              <RouteCard
-                route={item}
-                onEdit={() => {
-                  const coords = convertCoordsToPairs(item.coordinates);
-                  navigation.navigate('EditMap', {
-                    editMode: true,
-                    editableRoute: {
-                      id: item.id,
-                      coordinates: coords,
-                      name: item.name,
-                      color: item.color
-                    },
-                    returnTo: 'AdminLines'
-                  });
-                }}
-                onShow={() => {
-                  const coords = convertCoordsToPairs(item.coordinates);
-                  navigation.navigate('AdminMap', {
-                    customRoute: {
-                      coordinates: coords,
-                      color: item.color,
-                      name: item.name
-                    }
-                  });
-                }}
-                onDelete={() => handleDeleteRoute(item.id)}
-                onShowDetails={() => {
-                  setSelectedRouteForDetails(item);
-                  setShowRouteDetailsModal(true);
-                }}
-                isPersisted={!!persistedRoutes.find(r => r.id === item.id)}
-              />
-            )}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 100 }}
+          <RouteList
+            routes={persistedRoutes}
+            onEdit={(item) => {
+              const coords = convertCoordsToPairs(item.coordinates);
+              navigation.navigate('EditMap', {
+                editMode: true,
+                editableRoute: {
+                  id: item.id,
+                  coordinates: coords,
+                  name: item.name,
+                  color: item.color
+                },
+                returnTo: 'AdminLines'
+              });
+            }}
+            onShow={(item) => {
+              const coords = convertCoordsToPairs(item.coordinates);
+              navigation.navigate('AdminMap', {
+                customRoute: {
+                  coordinates: coords,
+                  color: item.color,
+                  name: item.name
+                }
+              });
+            }}
+            onDelete={(id) => handleDeleteRoute(id)}
+            onShowDetails={(item) => {
+              setSelectedRouteForDetails(item);
+              setShowRouteDetailsModal(true);
+            }}
           />
         </View>
       ) : (

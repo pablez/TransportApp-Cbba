@@ -3,8 +3,8 @@ import { View, Text, TextInput, TouchableOpacity, StyleSheet, FlatList, Alert, P
 import { Ionicons } from '@expo/vector-icons';
 import Slider from '@react-native-community/slider';
 import { useIsFocused } from '@react-navigation/native';
-import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../data/routes';
-import { db, auth } from '../config/firebase';
+import { ROUTE_150_DATA, ROUTE_230_DATA, ROUTE_INFO } from '../../data/routes';
+import { db, auth } from '../../config/firebase';
 import { collection, addDoc, onSnapshot, serverTimestamp, query, orderBy, deleteDoc, doc, getDoc, updateDoc, getDocs } from 'firebase/firestore';
 
 const extractCoordinatesFromGeo = (geo) => {

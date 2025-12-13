@@ -10,8 +10,8 @@ import {
   TextInput,
   Modal
 } from 'react-native';
-import { useAuth } from '../context/AuthContext';
-import { PASSENGER_TYPES, USER_ROLES } from '../utils/constants';
+import { useAuth } from '../../context/AuthContext';
+import { PASSENGER_TYPES, USER_ROLES } from '../../utils/constants';
 
 const AdminScreen = () => {
   const [activeTab, setActiveTab] = useState('users');

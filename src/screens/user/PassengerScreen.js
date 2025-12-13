@@ -17,14 +17,14 @@ import { WebView } from 'react-native-webview';
 // - Mapa visual: OpenLayers + OpenRouteService tiles
 // - Servicios: LocationService (OpenRouteService API wrapper)
 // - Geocodificación, routing y ubicación: OpenRouteService
-import LocationService from '../services/LocationService';
+import LocationService from '../../services/LocationService';
 import { doc, getDoc } from 'firebase/firestore';
-import { LocationService as FirestoreLocationService } from '../services/firestoreService';
+import { LocationService as FirestoreLocationService } from '../../services/firestoreService';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { useAuth } from '../context/AuthContext';
-import { PASSENGER_TYPES } from '../utils/constants';
-import { db } from '../config/firebase';
+import { useAuth } from '../../context/AuthContext';
+import { PASSENGER_TYPES } from '../../utils/constants';
+import { db } from '../../config/firebase';
 
 const PassengerScreen = () => {
   const [location, setLocation] = useState(null);

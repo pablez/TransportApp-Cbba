@@ -14,8 +14,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../config/firebase';
-import { USER_ROLES, PASSENGER_TYPES } from '../utils/constants';
+import { db } from '../../config/firebase';
+import { USER_ROLES, PASSENGER_TYPES } from '../../utils/constants';
 
 const { width } = Dimensions.get('window');
 
