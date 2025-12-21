@@ -184,6 +184,7 @@ const RouteManager: React.FC<RouteManagerProps> = ({
       <RouteInfoPanel 
         currentRoute={currentRoute}
         onCloseRoute={handleCloseRoute}
+        onDetails={() => {}}
       />
     </View>
   );

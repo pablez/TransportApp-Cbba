@@ -22,7 +22,7 @@ import AdminDashboardScreen from '../screens/admin/AdminDashboardScreen';
 import AdminMapScreen from '../screens/admin/AdminMapScreenRefactored';
 import EditMapScreen from '../screens/maps/EditMapScreen';
 import AdminLinesScreenRefactored from '../screens/admin/AdminLinesScreenRefactored';
-import LocationSearchScreen from '../screens/search/LocationSearchScreen';
+import LocationSearchScreen from '../screens/search/LocationSearchScreen.tsx';
 import UserApprovalScreen from '../screens/admin/UserApprovalScreen';
 import PaymentScreen from '../screens/user/PaymentScreen';
 import SimpleTestScreen from '../screens/tests/SimpleTestScreen';
@@ -41,12 +41,12 @@ const SCREEN_PATHS = {
   PublicMap: 'src/screens/public/PublicMapScreen.js',
   Register: 'src/screens/auth/RegisterScreen.js',
   EditProfile: 'src/screens/user/EditProfileScreen.js',
-  AdminMap: 'src/screens/admin/AdminMapScreenRefactored.js',
-  AdminDashboard: 'src/screens/admin/AdminDashboardScreen.js',
-  AdminLines: 'src/screens/admin/AdminLinesScreenRefactored.js',
-  EditMap: 'src/screens/maps/EditMapScreen.js',
   UserApproval: 'src/screens/admin/UserApprovalScreen.js',
-  LocationSearch: 'src/screens/search/LocationSearchScreen.js',
+  AdminMap: 'src/screens/admin/AdminMapScreenRefactored.tsx',
+  AdminDashboard: 'src/screens/admin/AdminDashboardScreen.tsx',
+  AdminLines: 'src/screens/admin/AdminLinesScreenRefactored.tsx',
+  EditMap: 'src/screens/maps/EditMapScreen.tsx',
+    LocationSearch: 'src/screens/search/LocationSearchScreen.tsx',
   PassengerMain: 'src/screens/user/PassengerScreen.js',
   RouteSearch: 'src/screens/search/RouteSearchScreen.js',
   Payment: 'src/screens/user/PaymentScreen.js',

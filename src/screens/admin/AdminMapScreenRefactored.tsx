@@ -61,9 +61,42 @@ const AdminMapScreen: React.FC<AdminMapScreenProps> = ({ navigation, route }) =>
     addSearchMarker,
   } = useAdminMapLogic();
 
+  const [lastShownRouteHash, setLastShownRouteHash] = useState<string | null>(null);
+
+  const computeRouteHash = (rInfo: any) => {
+    if (!rInfo) return null;
+    try {
+      // include distance to be slightly more robust
+      const coords = rInfo.coordinates || rInfo.geometry || [];
+      return `${rInfo.distance || ''}::${JSON.stringify(coords)}`;
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const showRouteIfChanged = (rd: RouteData) => {
+    try {
+      const hash = computeRouteHash(rd.routeInfo || rd);
+      if (hash && hash === lastShownRouteHash) {
+        console.log('NOBRIDGE LOG: showRouteIfChanged: route identical to last shown — skipping draw');
+        return;
+      }
+      // update lastShownRouteHash before sending to avoid races
+      if (hash) setLastShownRouteHash(hash);
+      showCustomRoute(rd);
+    } catch (e) {
+      console.warn('NOBRIDGE LOG: showRouteIfChanged error', e);
+      try { showCustomRoute(rd); } catch (er) { console.error('NOBRIDGE LOG: fallback showCustomRoute failed', er); }
+    }
+  };
+
   const { user: currentUser } = useAuth() as { user: any };
 
   const [mapStyle, setMapStyle] = useState<TileStyleKey>('standard');
+
+  const screenPath = 'src/screens/admin/AdminMapScreenRefactored.tsx';
+
+  console.log('NOBRIDGE LOG: AdminMap mounted. screenPath=', screenPath, 'initial route.params=', (route && (route as any).params) || null);
 
   const routeType: string | null = (route?.params as AdminMapScreenParams)?.routeType || null;
   const editMode: boolean = (route?.params as AdminMapScreenParams)?.editMode || false;
@@ -79,21 +112,94 @@ const AdminMapScreen: React.FC<AdminMapScreenProps> = ({ navigation, route }) =>
     const unsubscribe = navigation.addListener('focus', () => {
       const params = route.params as AdminMapScreenParams;
 
-      if (params?.origin && params?.destination && params?.showRoute) {
+      console.log('NOBRIDGE LOG: AdminMap focus listener fired. screenPath=', screenPath, 'params=', params, 'mapReady=', mapReady, 'webViewRefReady=', !!webViewRef?.current);
+      if (!params) {
+        try {
+          const navState = navigation.getState && navigation.getState();
+          console.log('NOBRIDGE LOG: focus listener: route.params undefined — inspecting navigation state top-level:', navState?.routes?.[navState.index || 0]);
+          // Try to find AdminMap route in nested state
+          const findParams = (s) => {
+            if (!s) return null;
+            if (s.routes && Array.isArray(s.routes)) {
+              for (const r of s.routes) {
+                if (r.name === 'AdminMap' && r.params) return r.params;
+                if (r.state) {
+                  const res = findParams(r.state);
+                  if (res) return res;
+                }
+              }
+            }
+            return null;
+          };
+          const found = findParams(navState);
+          console.log('NOBRIDGE LOG: focus listener: params found in navState search=', found);
+        } catch (e) {
+          console.warn('NOBRIDGE LOG: error inspecting navigation state', e);
+        }
+      }
+      // Prefer params from the direct route, but if undefined try to find them in navigation state
+      let effectiveParams = params;
+      if (!effectiveParams) {
+        try {
+          const navState = navigation.getState && navigation.getState();
+          const findParams = (s) => {
+            if (!s) return null;
+            if (s.routes && Array.isArray(s.routes)) {
+              for (const r of s.routes) {
+                if (r.name === 'AdminMap' && r.params) return r.params;
+                if (r.state) {
+                  const res = findParams(r.state);
+                  if (res) return res;
+                }
+              }
+            }
+            return null;
+          };
+          const found = findParams(navState);
+          if (found) {
+            console.log('NOBRIDGE LOG: focus listener: using params found in navState search=', found);
+            effectiveParams = found;
+          }
+        } catch (e) {
+          console.warn('NOBRIDGE LOG: error inspecting navigation state', e);
+        }
+      }
+
+      if (effectiveParams?.origin && effectiveParams?.destination && effectiveParams?.showRoute) {
+        console.log('NOBRIDGE LOG: Recibiendo datos de ruta (effectiveParams), seteando routeData... screenPath=', screenPath);
         setRouteData({
-          origin: params.origin,
-          destination: params.destination,
-          routeInfo: params.routeInfo,
-          routeError: params.routeError,
+          origin: effectiveParams.origin,
+          destination: effectiveParams.destination,
+          routeInfo: effectiveParams.routeInfo,
+          routeError: effectiveParams.routeError,
         } as RouteData);
 
-        navigation.setParams({
-          origin: null,
-          destination: null,
-          showRoute: null,
-          routeInfo: null,
-          routeError: null,
-        } as Partial<AdminMapScreenParams>);
+        try {
+          navigation.setParams({
+            origin: null,
+            destination: null,
+            showRoute: null,
+            routeInfo: null,
+            routeError: null,
+          } as Partial<AdminMapScreenParams>);
+        } catch (e) {
+          console.warn('NOBRIDGE LOG: navigation.setParams failed', e);
+        }
+
+        // If the map and WebView are ready, trigger immediate drawing
+        if (mapReady && webViewRef?.current) {
+          try {
+            console.log('NOBRIDGE LOG: focus listener: mapReady & webView ready — calling showRouteIfChanged immediately');
+            showRouteIfChanged({
+              origin: effectiveParams.origin,
+              destination: effectiveParams.destination,
+              routeInfo: effectiveParams.routeInfo,
+            } as RouteData);
+          } catch (e) {
+            console.error('NOBRIDGE LOG: error calling showRouteIfChanged in focus listener', e);
+          }
+        }
+
         return;
       }
 
@@ -107,6 +213,26 @@ const AdminMapScreen: React.FC<AdminMapScreenProps> = ({ navigation, route }) =>
 
     return unsubscribe;
   }, [navigation, mapReady]);
+
+  // Fallback: cuando `routeData` llegue y el WebView esté listo, intentar forzar el envío
+  useEffect(() => {
+    if (!routeData) return;
+
+    const webReady = !!webViewRef?.current;
+    console.log('NOBRIDGE LOG: useEffect fallback routeData change. screenPath=', screenPath, 'mapReady=', mapReady, 'webViewReady=', webReady, 'routeDataPresent=', !!routeData);
+
+    if (mapReady && webReady) {
+      try {
+        console.log('NOBRIDGE LOG: Enviando routeData al hook showRouteIfChanged (fallback). screenPath=', screenPath, 'routeData=', routeData);
+        showRouteIfChanged(routeData as RouteData);
+      } catch (e) {
+        console.error('NOBRIDGE LOG: Error en showRouteIfChanged fallback:', e);
+      }
+    } else {
+      console.log('NOBRIDGE LOG: Fallback no ejecutado — esperando mapReady y webViewRef. screenPath=', screenPath);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [routeData, mapReady, webViewRef]);
 
   const changeTileLayer = (styleKey: TileStyleKey): void => {
     const style = TILE_STYLES[styleKey] || TILE_STYLES.standard;
