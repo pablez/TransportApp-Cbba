@@ -434,63 +434,84 @@ const PassengerScreen = () => {
                     maxZoom: 18
                 });
                 
-                // Crear fuente OpenRouteService (tiles oficiales)
-                console.log('🌍 Creando fuente OpenRouteService...');
-                var orsSource = new ol.source.XYZ({
-                    url: 'https://maps.openrouteservice.org/tiles/{z}/{x}/{y}.png',
-                    crossOrigin: 'anonymous',
-                    attributions: '© <a href="https://openrouteservice.org/">OpenRouteService</a> | © <a href="https://www.openstreetmap.org/copyright">OpenStreetMap contributors</a>'
-                });
-                
-                // Crear capas
-                console.log('📋 Creando capas...');
-                var tileLayer = new ol.layer.Tile({
-                    source: orsSource
-                });
-                
+                // Crear fuente de tiles: probar OpenRouteService y caer a OpenStreetMap si falla
+                console.log('🌍 Probando tiles ORS y fallback a OSM si es necesario...');
+                var ORS_URL = 'https://maps.openrouteservice.org/tiles/{z}/{x}/{y}.png';
+                var OSM_URL = 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png';
+                var ORS_ATTR = '© OpenRouteService | © OpenStreetMap contributors';
+                var OSM_ATTR = '© OpenStreetMap contributors';
+
+                // Función para probar una URL de tile usando fetch en z=0,x=0,y=0
+                function testTileUrl(urlTemplate) {
+                  try {
+                    var testUrl = urlTemplate.replace('{z}', '0').replace('{x}', '0').replace('{y}', '0').replace('{a-c}', 'a');
+                    return fetch(testUrl, { method: 'GET', mode: 'cors' }).then(function(res) {
+                      return res && res.ok;
+                    }).catch(function() { return false; });
+                  } catch (e) { return Promise.resolve(false); }
+                }
+
+                // Crear capas (placeholder). Crearemos el mapa después de elegir la URL.
+                console.log('📋 Preparando capas vectoriales...');
                 var passengerLayer = new ol.layer.Vector({ 
-                    source: window.passengerSource,
-                    style: passengerStyle
+                  source: window.passengerSource,
+                  style: passengerStyle
                 });
-                
                 var driverLayer = new ol.layer.Vector({ 
-                    source: window.driversSource,
-                    style: driverStyle
+                  source: window.driversSource,
+                  style: driverStyle
                 });
-                
-                // Crear mapa principal
-                console.log('🎯 Creando mapa...');
-                window.map = new ol.Map({
-                    target: 'map',
-                    layers: [tileLayer, passengerLayer, driverLayer],
-                    view: view
-                });
-                
-                // Esperar a que se complete el render
-                window.map.once('rendercomplete', function() {
-                    console.log('✅ Mapa renderizado correctamente');
-                    loadingElement.style.display = 'none';
-                    
-                    // Notificar a React Native que el mapa está listo
-                    if (window.ReactNativeWebView) {
+
+                // Seleccionar URL de tiles y crear mapa
+                (function chooseTilesAndInit() {
+                  testTileUrl(ORS_URL).then(function(ok) {
+                    var chosenUrl = ok ? ORS_URL : OSM_URL;
+                    var chosenAttr = ok ? ORS_ATTR : OSM_ATTR;
+                    console.log('🌐 Tile source chosen:', ok ? 'ORS' : 'OSM');
+
+                    var tileLayer = new ol.layer.Tile({
+                      source: new ol.source.XYZ({
+                        url: chosenUrl,
+                        crossOrigin: 'anonymous',
+                        attributions: chosenAttr
+                      })
+                    });
+
+                    // Crear mapa principal ahora que tenemos la capa de tiles
+                    console.log('🎯 Creando mapa con layer:', chosenUrl);
+                    window.map = new ol.Map({
+                      target: 'map',
+                      layers: [tileLayer, passengerLayer, driverLayer],
+                      view: view
+                    });
+
+                    // Marcar mapa inicializado para que handleMessage procese mensajes
+                    window.mapInitialized = true;
+
+                    // Esperar a que se complete el render
+                    window.map.once('rendercomplete', function() {
+                      console.log('✅ Mapa renderizado correctamente');
+                      loadingElement.style.display = 'none';
+                        
+                      // Notificar a React Native que el mapa está listo
+                      if (window.ReactNativeWebView) {
                         setTimeout(function() {
-                            window.ReactNativeWebView.postMessage('mapReady');
+                          window.ReactNativeWebView.postMessage('mapReady');
                         }, 500);
-                    }
-                });
+                      }
+                    });
+
+                    // Timeout de seguridad: si no se dispara rendercomplete, avisar después
+                    setTimeout(function() {
+                      if (!window.map || !window.map.getView) return;
+                      try {
+                        if (loadingElement && loadingElement.style) loadingElement.style.display = 'none';
+                        if (window.ReactNativeWebView) window.ReactNativeWebView.postMessage('mapReady');
+                      } catch (e) { /* ignore */ }
+                    }, 5000);
+                  });
+                })();
                 
-                // Timeout de seguridad por si algo falla
-                setTimeout(function() {
-                    console.log('⏰ Timeout - removiendo loading...');
-                    loadingElement.style.display = 'none';
-                    
-                    if (window.ReactNativeWebView) {
-                        window.ReactNativeWebView.postMessage('mapReady');
-                    }
-                }, 5000);
-                
-                window.mapInitialized = true;
-                console.log('🎉 Inicialización completa');
                 
             } catch (error) {
                 console.error('❌ ERROR en inicialización:', error.message);

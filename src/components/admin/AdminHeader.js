@@ -6,8 +6,7 @@ import { ROUTE_INFO } from '../../data/routes';
 
 const AdminHeader = ({ 
   currentRoute, 
-  onCloseRoute, 
-  navigation 
+  onCloseRoute
 }) => {
   const getHeaderTitle = () => {
     if (currentRoute && ROUTE_INFO[currentRoute]) {
@@ -19,7 +18,7 @@ const AdminHeader = ({
   return (
     <HeaderWithDrawer 
       title={getHeaderTitle()}
-      navigation={navigation}
+      subtitle={currentRoute && ROUTE_INFO[currentRoute] ? 'Ruta activa' : ''}
     />
   );
 };

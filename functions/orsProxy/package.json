@@ -1,0 +1,14 @@
+{
+  "name": "ors-proxy",
+  "version": "1.0.0",
+  "main": "index.js",
+  "engines": {
+    "node": "18"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "firebase-functions": "^4.4.0",
+    "node-fetch": "^3.3.2"
+  }
+}

@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { useAuth } from '../context/AuthContext';
 
-const HeaderWithDrawer = ({ title, showProfile = true }) => {
+const HeaderWithDrawer = ({ title, subtitle = '', showProfile = true }) => {
   const navigation = useNavigation();
   const { user } = useAuth();
 
@@ -20,7 +20,10 @@ const HeaderWithDrawer = ({ title, showProfile = true }) => {
           <TouchableOpacity style={styles.menuButton} onPress={openDrawer}>
             <Ionicons name="menu" size={24} color="white" />
           </TouchableOpacity>
-          <Text style={styles.title}>{title}</Text>
+          <View style={styles.titleContainer}>
+            <Text style={styles.title}>{title}</Text>
+            {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
+          </View>
         </View>
         
         {showProfile && user && (
@@ -62,6 +65,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  titleContainer: {
+    flexDirection: 'column',
+    flex: 1,
+  },
   rightSection: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -76,6 +83,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: 'white',
     flex: 1,
+  },
+  subtitle: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.9)',
+    marginTop: 2,
   },
   profileButton: {
     padding: 4,

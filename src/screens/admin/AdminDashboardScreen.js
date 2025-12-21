@@ -28,28 +28,54 @@ const AdminDashboardScreen = ({ navigation }) => {
   const loadPendingUsers = async () => {
     setLoading(true);
     try {
-      const q = query(
-        collection(db, 'users'),
-        where('isApproved', '==', false)
-      );
-      
-      const querySnapshot = await getDocs(q);
+      console.log('Cargando usuarios pendientes: ejecutando consulta isApproved==false');
+      let q = query(collection(db, 'users'), where('isApproved', '==', false));
+      let querySnapshot = await getDocs(q);
+
+      // Si la consulta no devuelve resultados, intentar nombres alternativos del campo
+      if (querySnapshot.empty) {
+        console.log('Consulta isApproved==false no devolvió resultados; intentando campo "approved"');
+        q = query(collection(db, 'users'), where('approved', '==', false));
+        querySnapshot = await getDocs(q);
+      }
+
+      // Como último recurso, obtener todos y filtrar en cliente
+      if (querySnapshot.empty) {
+        console.log('Consulta por campo de aprobación vacía; obteniendo todos y filtrando en cliente');
+        const allSnapshot = await getDocs(collection(db, 'users'));
+        const all = [];
+        allSnapshot.forEach(doc => all.push({ id: doc.id, ...doc.data() }));
+        const filtered = all.filter(u => u.isApproved === false || u.approved === false || u.status === 'pending' || u.isPending === true);
+        querySnapshot = { docs: filtered.map(u => ({ id: u.id, data: () => ({ ...u }) })), empty: filtered.length === 0 };
+      }
+
       const users = [];
+      querySnapshot.forEach
+        ? querySnapshot.forEach((doc) => {
+            const userData = { id: doc.id, ...doc.data() };
+            users.push(userData);
+          })
+        : // when we constructed a pseudo-snapshot above
+          querySnapshot.docs.forEach((d) => users.push({ id: d.id, ...(d.data ? d.data() : d) }));
       
-      querySnapshot.forEach((doc) => {
-        const userData = { id: doc.id, ...doc.data() };
-        users.push(userData);
-      });
-      
-      // Ordenar por fecha localmente
-      users.sort((a, b) => {
-        const dateA = a.createdAt?.toDate ? a.createdAt.toDate() : new Date(a.createdAt);
-        const dateB = b.createdAt?.toDate ? b.createdAt.toDate() : new Date(b.createdAt);
-        return dateB - dateA;
-      });
+      // Normalizar createdAt y ordenar por fecha (más reciente primero)
+      const normalizeDate = (val) => {
+        if (!val) return new Date(0);
+        try {
+          if (val?.toDate && typeof val.toDate === 'function') return val.toDate();
+          if (val?.seconds) return new Date(val.seconds * 1000);
+          if (typeof val === 'number') return new Date(val);
+          const parsed = new Date(val);
+          if (!isNaN(parsed.getTime())) return parsed;
+        } catch (e) { /* ignore */ }
+        return new Date(0);
+      };
+
+      users.forEach(u => { u._createdAtDate = normalizeDate(u.createdAt); });
+      users.sort((a, b) => b._createdAtDate - a._createdAtDate);
       
       setPendingUsers(users);
-      console.log('Loaded pending users:', users.length);
+      console.log('Loaded pending users:', users.length, users.map(u=>({id:u.id, createdAt:u._createdAtDate})).slice(0,5));
     } catch (error) {
       console.error('Error loading pending users:', error);
       Alert.alert('Error', 'No se pudieron cargar las solicitudes pendientes');

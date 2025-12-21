@@ -137,11 +137,23 @@ export const useAdminMapLogic = () => {
       pendingLocationRef.current = { latitude: latNum, longitude: lngNum };
       // Normalizar keys inesperadas antes de loguear (defensa contra bundles antiguos)
       const _pending = pendingLocationRef.current ? { ...pendingLocationRef.current } : null;
-      if (_pending && Object.prototype.hasOwnProperty.call(_pending, 'longiitude')) {
-        _pending.longitude = _pending.longiitude;
-        delete _pending.longiitude;
+      if (_pending) {
+        // Map common misspellings from older bundles or external sources
+        if (Object.prototype.hasOwnProperty.call(_pending, 'longiitude')) {
+          _pending.longitude = _pending.longiitude;
+          delete _pending.longiitude;
+        }
+        if (Object.prototype.hasOwnProperty.call(_pending, 'latitudde')) {
+          _pending.latitude = _pending.latitudde;
+          delete _pending.latitudde;
+        }
+        if (Object.prototype.hasOwnProperty.call(_pending, 'lat')) {
+          _pending.latitude = _pending.lat;
+          delete _pending.lat;
+        }
       }
-      console.log('ℹ️ WebView pendiente:', JSON.stringify({ hasWebView: !!webViewRef.current, mapReady, pending: _pending }));
+      // Log as object to avoid malformed JSON string artifacts in Metro console
+      console.log('ℹ️ WebView pendiente:', { hasWebView: !!webViewRef.current, mapReady, pending: _pending });
     }
   };
 
@@ -176,37 +188,69 @@ export const useAdminMapLogic = () => {
     }
   };
 
+  // Zoom in / out helpers
+  // Zoom helpers removed (buttons disabled). Map zoom still controllable via gestures.
+
   // Mostrar ruta de transporte público
   const showTransportRoute = (routeType, routeDataSource, routeInfo) => {
     if (!webViewRef.current || !mapReady) return;
-    
     if (!routeDataSource || !routeDataSource.features || routeDataSource.features.length === 0) {
       console.warn('⚠️ No se encontraron datos de ruta para:', routeType);
       return;
     }
-    
-    const coordinates = routeDataSource.features[0].geometry.coordinates;
+
+    const features = routeDataSource.features;
     const routeColor = routeInfo.color;
     const routeName = routeInfo.name;
-    
+
     const script = `
-      if (window.addTransportRoute) {
-        const coordinates = ${JSON.stringify(coordinates)};
-        window.addTransportRoute(coordinates, "${routeColor}", "${routeName}");
-        console.log('🚌 Ruta ${routeName} agregada al mapa');
-        
-        if (coordinates.length > 0) {
-          const centerLat = coordinates[Math.floor(coordinates.length / 2)][1];
-          const centerLng = coordinates[Math.floor(coordinates.length / 2)][0];
-          window.centerMap(centerLng, centerLat, 12);
+      (function(){
+        try {
+          if (!window.addTransportRoute) {
+            window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'transportError', message: 'addTransportRoute not available' }));
+            return;
+          }
+          try { window.clearTransportRoutes(); } catch(e) {}
+          const features = ${JSON.stringify(features)};
+          let added = 0;
+          features.forEach((f, idx) => {
+            try {
+              const coords = (f.geometry && f.geometry.coordinates) ? f.geometry.coordinates : [];
+              // normalize if MultiLineString (array of arrays)
+              let flat = [];
+              if (coords.length>0 && Array.isArray(coords[0]) && Array.isArray(coords[0][0])) {
+                // MultiLineString: concat all segments
+                coords.forEach(seg => { if (Array.isArray(seg)) flat = flat.concat(seg); });
+              } else {
+                flat = coords;
+              }
+              const name = (f.properties && (f.properties.name || f.properties.title)) || ("${routeName}" + (features.length>1?(' #' + (idx+1)):''));
+              if (flat && flat.length>0) {
+                window.addTransportRoute(flat, "${routeColor}", name);
+                added += 1;
+              }
+            } catch(err) { console.warn('Error adding transport route feature', err); }
+          });
+          // center on first feature
+          try {
+            const first = features[0];
+            const c = (first && first.geometry && first.geometry.coordinates) ? first.geometry.coordinates : null;
+            if (c && c.length>0) {
+              const sample = Array.isArray(c[0]) && Array.isArray(c[0][0]) ? c[0] : c;
+              const centerLat = sample[Math.floor(sample.length / 2)][1];
+              const centerLng = sample[Math.floor(sample.length / 2)][0];
+              window.centerMap(centerLng, centerLat, 12);
+            }
+          } catch(e) {}
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'transportAdded', count: added }));
+        } catch(e) {
+          window.ReactNativeWebView && window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'transportError', message: String(e) }));
         }
-      } else {
-        console.warn('⚠️ Función addTransportRoute no disponible');
-      }
+      })();
     `;
-    
+
     webViewRef.current.postMessage(script);
-    console.log(`🚌 Mostrando ruta: ${routeName}`);
+    console.log(`🚌 Mostrando routes de transporte: ${routeName}`);
   };
 
   // Mostrar ruta personalizada

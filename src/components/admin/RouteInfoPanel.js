@@ -5,7 +5,8 @@ import { ROUTE_INFO } from '../../data/routes';
 
 const RouteInfoPanel = ({ 
   currentRoute, 
-  onCloseRoute 
+  onCloseRoute,
+  onDetails
 }) => {
   if (!currentRoute || !ROUTE_INFO[currentRoute]) {
     return null;
@@ -22,12 +23,20 @@ const RouteInfoPanel = ({
         <Text style={styles.routeTitle}>
           {routeInfo.name}
         </Text>
-        <TouchableOpacity 
-          onPress={onCloseRoute} 
-          style={styles.closeRouteButton}
-        >
-          <Ionicons name="close" size={16} color="#666" />
-        </TouchableOpacity>
+        <View style={styles.headerActions}>
+          <TouchableOpacity onPress={() => onDetails && onDetails(currentRoute)} style={styles.actionButton} accessibilityRole="button" accessibilityLabel="Detalles de la ruta" accessibilityHint="Abre información detallada de la ruta">
+            <Ionicons name="information-circle" size={18} color="#666" />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            onPress={onCloseRoute} 
+            style={styles.actionButton}
+            accessibilityRole="button"
+            accessibilityLabel="Cerrar panel de ruta"
+            accessibilityHint="Oculta la información de la ruta mostrada"
+          >
+            <Ionicons name="close" size={18} color="#666" />
+          </TouchableOpacity>
+        </View>
       </View>
       <Text style={styles.routeDescription}>
         {routeInfo.description}
@@ -81,7 +90,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   closeRouteButton: {
-    padding: 4,
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: '#f5f6f7',
+  },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  actionButton: {
+    padding: 8,
+    marginLeft: 6,
     borderRadius: 12,
     backgroundColor: '#f5f6f7',
   },

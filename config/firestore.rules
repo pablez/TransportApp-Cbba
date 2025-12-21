@@ -3,67 +3,158 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Usuarios: lectura si eres el mismo usuario o si eres admin; crear/editar solo por el propio usuario
-    match /users/{userId} {
-      // Lectura: el dueño puede leer su doc; además permitimos que un usuario con role=='admin'
-      // (almacenado en su propio documento users/{uid}) lea otros usuarios. Para evitar errores
-      // cuando el documento admin no exista, comprobamos exists(...) antes de acceder a .data.
-      allow read: if request.auth != null && (
-        request.auth.uid == userId ||
-        (
-          // comprobar existencia y luego comparar el campo role a 'admin'
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          // aceptar tanto 'admin' como 'ADMIN' para evitar problemas por mayúsculas
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
-        )
-      );
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
 
-      // Crear solo por el propio usuario autenticado.
-      // Permitir update/delete al propio usuario OR a un admin (role == 'admin'|'ADMIN').
-      // Esto permite que administradores aprueben/rechacen cuentas desde la app.
-      allow create: if request.auth != null && request.auth.uid == userId;
-      allow update, delete: if request.auth != null && (
-        request.auth.uid == userId || (
-          exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
-        )
+    function isAdmin() {
+      return isSignedIn() && (request.auth.token.role in ['admin', 'ADMIN', 'Admin']);
+    }
+
+    // acepta GeoPoint en field `location` o campos legacy `latitude`/`longitude`
+    function hasValidLocation(obj) {
+      return (
+        (obj.location is map && (
+          obj.location.latitude is number && obj.location.longitude is number
+          || obj.location.lat is number && obj.location.lng is number
+        ))
+        || (obj.latitude is number && obj.longitude is number)
+        || (obj.lat is number && obj.lng is number)
       );
     }
 
-    // Viajes: cualquiera autenticado puede crear; solo pasajero/chofer pueden leer/editar su viaje
+    // acepta Timestamp o ISO string legacy
+    function isTimestampOrString(value) {
+      return value is timestamp || value is string;
+    }
+
+
+    // Usuarios: lectura si eres el mismo usuario o si eres admin; crear/editar solo por el propio usuario
+    match /users/{userId} {
+      // Lectura: el dueño puede leer su doc; además permitimos admins mediante custom claim
+      allow read: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+
+      // Crear solo por el propio usuario autenticado.
+      // Permitir update/delete al propio usuario OR a un admin (custom claim).
+      allow create: if isSignedIn() && request.auth.uid == userId
+        && request.resource.data.email is string;
+
+      allow update, delete: if isSignedIn() && (
+        request.auth.uid == userId || isAdmin()
+      )
+      // Validaciones mínimas al actualizar/crear
+      && (request.resource.data.email is string || !('email' in request.resource.data))
+      && (request.resource.data.role is string || !('role' in request.resource.data))
+      && (
+        !request.resource.data.keys().hasAny(['createdAt']) ||
+        isTimestampOrString(request.resource.data.createdAt)
+      );
+    }
+
+    // Viajes (legacy): si existen, mantener reglas compatibles
     match /trips/{tripId} {
-      allow create: if request.auth != null && request.resource.data.passengerId is string;
-      allow read, update, delete: if request.auth != null &&
-        ((resource.data.passengerId == request.auth.uid) || (resource.data.driverId == request.auth.uid));
+      allow create: if isSignedIn() && request.resource.data.passengerId is string;
+      allow read, update, delete: if isSignedIn() && (
+        (resource.data.passengerId == request.auth.uid) || (resource.data.driverId == request.auth.uid) || isAdmin()
+      );
     }
 
     // Ubicaciones de conductores
     match /driverLocations/{driverId} {
-      allow read: if request.auth != null;
-      allow write: if request.auth != null && request.auth.uid == driverId;
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && request.auth.uid == driverId
+        && hasValidLocation(request.resource.data)
+        && (request.resource.data.accuracy is number || !request.resource.data.keys().hasAny(['accuracy']))
+        && (request.resource.data.isOnline is bool || !request.resource.data.keys().hasAny(['isOnline']))
+        && (
+          !request.resource.data.keys().hasAny(['timestamp']) ||
+          isTimestampOrString(request.resource.data.timestamp)
+        );
+      allow delete: if isSignedIn() && (request.auth.uid == driverId || isAdmin());
     }
 
-    // Pagos: solo propietario puede crear/leer/editar sus pagos
+    // Pagos: solo propietario puede crear/leer/editar sus pagos (legacy)
     match /payments/{paymentId} {
-      allow create: if request.auth != null && request.resource.data.userId == request.auth.uid;
-      allow read, update, delete: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && request.resource.data.userId == request.auth.uid;
+      allow read, update, delete: if isSignedIn() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 
-    // Rutas (líneas) - lectura SIEMPRE permitida para invitados, escrituras sólo por admins
+    // Rutas (líneas) - lectura pública permitida si la ruta es pública; escrituras sólo por admins
     match /routes/{routeId} {
-      // TEMPORALMENTE: Permitir lectura a todos para diagnosticar el problema
-      allow read: if true;
-      allow create, update, delete: if request.auth != null && (
-        // comprobar que el creador es admin según su documento users/{uid}
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role in ['admin', 'ADMIN']
-      );
+      allow read: if resource.data.public == true || isSignedIn();
+
+      allow create, update, delete: if isSignedIn() && isAdmin()
+        && (request.resource.data.name is string || !('name' in request.resource.data))
+        // aceptar geometry (map/encoded) o legacy coordinates/points
+        && (
+          request.resource.data.geometry is string ||
+          request.resource.data.geometry is map ||
+          request.resource.data.path is list ||
+          request.resource.data.coordinates is list ||
+          request.resource.data.points is list ||
+          !('geometry' in request.resource.data)
+        )
+        && (
+          !request.resource.data.keys().hasAny(['createdAt']) ||
+          isTimestampOrString(request.resource.data.createdAt)
+        );
     }
 
-    // Vehículos: lectura autenticada; escritura solo si el request.resource.data.driverId coincide
+    // Vehículos: lectura autenticada; escritura por el conductor propietario o admin
     match /vehicles/{vehicleId} {
-      allow read: if request.auth != null;
-      allow create, update, delete: if request.auth != null && request.resource.data.driverId == request.auth.uid;
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn() && (
+        request.resource.data.driverId == request.auth.uid || isAdmin()
+      )
+      // validaciones mínimas
+      && (request.resource.data.plate is string || !request.resource.data.keys().hasAny(['plate']))
+      && (
+        !request.resource.data.keys().hasAny(['vehicleInfo']) ||
+        request.resource.data.vehicleInfo.model is string
+      );
+
+      allow delete: if isSignedIn() && (request.resource.data.driverId == request.auth.uid || isAdmin());
+    }
+
+    // Auditoría y telemetría: permitir a usuarios autenticados crear sus propios registros
+    // en la modalidad Spark (free) validando que `userId` coincida con el UID autenticado.
+    // Recomendación: cuando se disponga de custom claims o Cloud Functions, restringir a admins.
+    match /audit_logs/{docId} {
+      allow create: if isSignedIn()
+        // el creador debe declarar su userId igual al uid autenticado
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.action is string
+        && (!('affectedRouteIds' in request.resource.data) || request.resource.data.affectedRouteIds is list)
+        && (!('note' in request.resource.data) || request.resource.data.note is string)
+        && (!('timestamp' in request.resource.data) || request.resource.data.timestamp is timestamp);
+
+      // Lectura: propietario o admins
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if false; // inmutables
+    }
+
+    match /telemetry/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.event is string
+        && (!('routesCount' in request.resource.data) || request.resource.data.routesCount is number)
+        && (!('durationMs' in request.resource.data) || request.resource.data.durationMs is number)
+        && (!('timestamp' in request.resource.data) || request.resource.data.timestamp is timestamp);
+
+      allow read: if isSignedIn() && isAdmin();
+      allow update, delete: if false;
+    }
+
+    match /action_history/{docId} {
+      allow create: if isSignedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.action is string
+        && (!('count' in request.resource.data) || request.resource.data.count is number)
+        && (!('timestamp' in request.resource.data) || request.resource.data.timestamp is timestamp);
+
+      allow read: if isSignedIn() && (isAdmin() || resource.data.userId == request.auth.uid);
+      allow update, delete: if false;
     }
 
   }

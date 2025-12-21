@@ -1,7 +1,20 @@
-import { StyleSheet, Dimensions } from 'react-native';
+import { StyleSheet, Dimensions, PixelRatio } from 'react-native';
 
 const { width, height } = Dimensions.get('window');
 const isTablet = width > 768;
+
+// Detectar resolución física (px) para dispositivos de alta densidad
+const physicalWidth = Math.round(width * PixelRatio.get());
+const physicalHeight = Math.round(height * PixelRatio.get());
+const isHighResPhone = (
+  (physicalWidth >= 1080 && physicalHeight >= 1920) ||
+  (physicalWidth >= 1080 && physicalHeight >= 2400) ||
+  (physicalHeight >= 1080 && physicalWidth >= 1920)
+);
+const SCALE = isHighResPhone ? 1.06 : 1;
+
+// Multiplicador global para aumentar tamaño de fuente en toda la app
+export const FONT_MULTIPLIER = 1.10;
 
 // Colores base del sistema
 export const COLORS = {
@@ -13,24 +26,28 @@ export const COLORS = {
   danger: '#f44336',
   background: '#f5f5f5',
   surface: '#ffffff',
-  text: '#333333',
-  textSecondary: '#666666',
+  text: '#222222',
+  textSecondary: '#4f4f4f',
   border: '#e0e0e0',
   disabled: '#bdbdbd'
 };
 
 // Espaciado responsivo
 export const SPACING = {
-  xs: 4,
-  sm: 8,
-  md: 16,
-  lg: 24,
-  xl: 32,
-  xxl: 48
+  xs: Math.round(4 * SCALE),
+  sm: Math.round(8 * SCALE),
+  md: Math.round(16 * SCALE),
+  lg: Math.round(24 * SCALE),
+  xl: Math.round(32 * SCALE),
+  xxl: Math.round(48 * SCALE)
 };
 
-// Fuentes responsivas
-const getFontSize = (mobile, tablet = mobile) => isTablet ? tablet : mobile;
+// Fuentes responsivas con tamaño mínimo para accesibilidad
+const MIN_FONT = 12;
+const getFontSize = (mobile, tablet = mobile) => {
+  const computed = (isTablet ? tablet : mobile) * SCALE * FONT_MULTIPLIER;
+  return Math.max(MIN_FONT, Math.round(computed));
+};
 
 export const adminStyles = StyleSheet.create({
   // Contenedores principales
@@ -43,12 +60,13 @@ export const adminStyles = StyleSheet.create({
   listContainer: {
     flex: 1,
     backgroundColor: COLORS.background,
-    paddingTop: 80,
+    // Reducido para mostrar más contenido visible bajo el header
+    paddingTop: isTablet ? 64 : 12,
   },
   formContainer: {
     flex: 1,
     backgroundColor: COLORS.surface,
-    paddingTop: 80,
+    paddingTop: isTablet ? 64 : 12,
   },
 
   // Header
@@ -87,11 +105,9 @@ export const adminStyles = StyleSheet.create({
 
   // Botón flotante
   floatingButton: {
-    position: 'absolute',
-    right: SPACING.md,
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: isTablet ? 56 : 48,
+    height: isTablet ? 56 : 48,
+    borderRadius: isTablet ? 28 : 24,
     backgroundColor: COLORS.primary,
     justifyContent: 'center',
     alignItems: 'center',
@@ -103,6 +119,30 @@ export const adminStyles = StyleSheet.create({
     shadowRadius: 6,
   },
 
+  fabContainer: {
+    position: 'absolute',
+    right: SPACING.md,
+    bottom: SPACING.md,
+    flexDirection: 'row',
+    alignItems: 'center',
+    zIndex: 30,
+  },
+
+  fabLabel: {
+    backgroundColor: COLORS.primaryDark,
+    paddingHorizontal: SPACING.md,
+    paddingVertical: SPACING.xs,
+    borderRadius: 20,
+    marginRight: SPACING.sm,
+    elevation: 4,
+  },
+
+  fabLabelText: {
+    color: '#fff',
+    fontWeight: '600',
+    fontSize: getFontSize(12, 14),
+  },
+
   // Botones principales
   createButton: {
     flexDirection: 'row',
@@ -110,18 +150,20 @@ export const adminStyles = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: COLORS.primary,
     borderRadius: 8,
-    marginHorizontal: SPACING.md,
+    marginHorizontal: isTablet ? SPACING.md : SPACING.sm,
     marginBottom: SPACING.md,
     elevation: 2,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.15,
     shadowRadius: 4,
+    paddingVertical: isTablet ? SPACING.sm : SPACING.xs,
   },
   createButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: SPACING.sm,
+    fontSize: getFontSize(14, 16),
   },
 
   utilityButton: {
@@ -144,9 +186,6 @@ export const adminStyles = StyleSheet.create({
     fontWeight: '600',
     marginLeft: SPACING.xs,
     textAlign: 'center',
-  },
-  defaultRoutesButton: {
-    backgroundColor: COLORS.warning,
   },
   publicRoutesButton: {
     backgroundColor: COLORS.success,
@@ -302,6 +341,7 @@ export const adminStyles = StyleSheet.create({
     color: '#fff',
     fontWeight: 'bold',
     marginLeft: SPACING.sm,
+    fontSize: getFontSize(14, 16),
   },
 
   // Estados de carga y error

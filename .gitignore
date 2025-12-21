@@ -1,4 +1,12 @@
-# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+# Ignore local service account keys and migration exports
+*.json
+!package.json
+!package-lock.json
+.expo
+node_modules
+routes_backup_export.json
+migration_report.json
+transportapp-cochabamba-firebase-adminsdk.json# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 
 # dependencies
 node_modules/
@@ -32,6 +40,10 @@ yarn-error.*
 
 # local env files
 .env*.local
+ .env
+
+# functions proxy env
+functions/orsProxy/.env
 
 # typescript
 *.tsbuildinfo

@@ -1,0 +1,118 @@
+@startuml DiagramaDeClasesRTP
+hide circle
+skinparam classAttributeIconSize 0
+
+class Vehiculo {
+  - id: String
+  - plate: String
+  - routeId: String
+  - driverId: String
+  - location: GeoPoint
+  - latitud (legacy): Float
+  - longitud (legacy): Float
+  - speed: Number
+  - lastPing: Timestamp
+  - status: String
+  -- Métodos (server) --
+  + actualizarPosicion(lat, lon, vel)
+  + calcularETA(stopId): Float
+}
+
+class Ruta {
+  - id: String
+  - name: String
+  - color: String
+  - geometry: GeoJSON | encodedPolyline
+  - path: Array<GeoPoint>         // nueva: array de GeoPoint (lat,lng) para consultas y mapas
+  - coordinates (legacy): Array  // legacy: array de {lat,lng} o [lng,lat]
+  - points (legacy): Array      // array de paradas con campos duplicados
+  - totalPoints (legacy): Number
+  - fareBase: Number
+  - public: Boolean
+  - createdAt: Timestamp
+  - createdBy: String
+  - schemaVersion: Integer
+  -- Métodos --
+  + getGeometria()
+}
+
+class Parada {
+  - id: String
+  - routeId: String
+  - name: String
+  - location: GeoPoint    // preferible: GeoPoint para consultas espaciales
+  - latitude (legacy): Float
+  - longitude (legacy): Float
+  - order: Integer
+  - street: String
+}
+
+class Usuario {
+  - id: String
+  - firstName: String
+  - lastName: String
+  - email: String
+  - phone: String
+  - role: String ("DRIVER"|"PASSENGER"|"ADMIN")
+  - isActive: Boolean
+  - status: String
+  - createdAt: Timestamp
+  - createdAt_legacy: String
+  - approvedAt: Timestamp
+  - approvedAt_legacy: String
+  - vehicleInfo: Map (model, plate, year, capacity)
+  - images: Map (profileImage, idCardFront, ...)
+  - schemaVersion: Integer
+  -- Métodos (server) --
+  + seleccionarPerfil(perfilId: String)
+}
+
+class Tarifa {
+  - id: String
+  - profileName: String ("Universitario", "3raEdad")
+  - discountFactor: Number
+  -- Métodos --
+  + aplicarDescuento(fareBase: Number): Number
+}
+
+class DriverLocation {
+  - id: String
+  - driverId: String
+  - location: GeoPoint
+  - latitude (legacy): Float
+  - longitude (legacy): Float
+  - accuracy: Number
+  - isOnline: Boolean
+  - speed: Number
+  - timestamp: Timestamp
+}
+
+'' Trip and Payment removed per request
+
+class AuditLog {
+  - id: String
+  - entity: String
+  - entityId: String
+  - action: String
+  - performedBy: String
+  - timestamp: Timestamp
+}
+
+' Relaciones Técnicas RTP
+Vehiculo "1" -- "1" Ruta : sigue
+Ruta "1" -- "*" Parada : contiene
+Vehiculo "1" -- "*" DriverLocation : registra
+Ruta "1" -- "*" Parada : tiene
+
+' Firestore structure notes
+' - Collection: `routes` (documents: Route)
+' - Subcollection: `routes/{routeId}/stops` (documents: Parada)
+
+' Relaciones Administrativas y de Negocio
+Usuario "1" -- "0..1" Vehiculo : puedePoseer
+Usuario "1" -- "1" Tarifa : puedeTener
+Usuario "1" -- "*" AuditLog : registraAcciones
+Usuario "1" -- "*" Ruta : gestiona <<if role==ADMIN>>
+Tarifa "1" -- "*" Usuario : aplicaA
+
+@enduml

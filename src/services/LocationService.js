@@ -1,4 +1,5 @@
 import * as Location from 'expo-location';
+import Constants from 'expo-constants';
 
 /**
  * Servicio de OpenRouteService para geocodificación y búsqueda de ubicaciones
@@ -18,8 +19,21 @@ import * as Location from 'expo-location';
 
 // 🌐 CONFIGURACIÓN DE ENDPOINTS
 // Para migrar a instancia local, cambiar BASE_URL a: 'http://localhost:8080/ors'
-const API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjliYzhiZDJmY2RjMTQxNzRhZGRkM2UyZDUyNWRhYmJiIiwiaCI6Im11cm11cjY0In0=';
+// API key: se toma de `app.json` / `expo.manifest` extras o de env vars.
 const BASE_URL = 'https://api.openrouteservice.org'; // API Pública
+
+// Proxy URL (opcional): si está configurado, las peticiones de routing se enviarán al proxy
+const PROXY_URL = Constants?.expoConfig?.extra?.ORS_PROXY_URL || Constants?.manifest?.extra?.ORS_PROXY_URL || process.env.ORS_PROXY_URL || null;
+
+// Leer API key desde expo constants (expo config extras) para evitar hardcodear
+// Soporta tanto expoConfig (nuevo) como manifest (legacy) para compatibilidad
+const API_KEY = Constants?.expoConfig?.extra?.ORS_API_KEY || Constants?.manifest?.extra?.ORS_API_KEY || process.env.ORS_API_KEY || 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjliYzhiZDJmY2RjMTQxNzRhZGRkM2UyZDUyNWRhYmJiIiwiaCI6Im11cm11cjY0In0=';
+
+if (!API_KEY) {
+  console.warn('⚠️ LocationService: OpenRouteService API key no encontrada. Coloca ORS key en expo config extras ORS_API_KEY.');
+} else {
+  console.log('✅ LocationService: API key configurada correctamente');
+}
 // const BASE_URL = 'http://localhost:8080/ors'; // ⬅ Para instancia local (futuro)
 // const API_KEY = null; // ⬅ No necesario en instancia local
 
@@ -488,6 +502,65 @@ class LocationService {
       };
 
       console.log('📡 Enviando solicitud de ruta a OpenRouteService...');
+
+      // Si hay proxy configurado, usarlo para proteger la API key en clientes
+      if (PROXY_URL) {
+        const proxyUrl = `${PROXY_URL.replace(/\/$/, '')}/directions/${encodeURIComponent(profile)}`;
+        console.log('🔁 Usando proxy ORS:', proxyUrl);
+
+        const upstream = await fetch(proxyUrl, {
+          method: 'POST',
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(requestBody)
+        });
+
+        if (!upstream.ok) {
+          const errtxt = await upstream.text();
+          throw new Error(`Error proxy ORS (${upstream.status}): ${errtxt}`);
+        }
+
+        const routeData = await upstream.json();
+
+        if (!routeData.routes || routeData.routes.length === 0) {
+          throw new Error('No se pudo calcular una ruta válida (proxy)');
+        }
+
+        const route = routeData.routes[0];
+        const summary = route.summary;
+        const segment = route.segments[0];
+
+        let routeCoordinates;
+        if (typeof route.geometry === 'string') {
+          routeCoordinates = this.decodePolyline(route.geometry);
+        } else if (Array.isArray(route.geometry)) {
+          routeCoordinates = route.geometry;
+        } else {
+          routeCoordinates = [[start.longitude, start.latitude], [end.longitude, end.latitude]];
+        }
+
+        const routeInfo = {
+          success: true,
+          coordinates: routeCoordinates,
+          distance: summary.distance * 1000,
+          duration: summary.duration,
+          steps: segment.steps,
+          summary: summary,
+          profile: profile,
+          bounds: routeData.bbox ? {
+            minLng: routeData.bbox[0],
+            minLat: routeData.bbox[1],
+            maxLng: routeData.bbox[2],
+            maxLat: routeData.bbox[3]
+          } : this.calculateBounds(routeCoordinates)
+        };
+
+        return routeInfo;
+      }
+
+      if (!API_KEY) throw new Error('ORS API key no configurada');
 
       const response = await fetch(url, {
         method: 'POST',

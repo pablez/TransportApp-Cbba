@@ -29,6 +29,20 @@ export const generateAdminMapHTML = (editMode = false) => {
               position: absolute; top: 10px; right: 10px; background: rgba(255,255,255,0.9);
               padding: 8px 12px; border-radius: 8px; font-size: 12px; z-index: 1000;
           }
+          .route-label {
+              background: rgba(255, 255, 255, 0.95) !important;
+              border: 2px solid rgba(0, 0, 0, 0.8) !important;
+              border-radius: 6px !important;
+              padding: 4px 10px !important;
+              font-weight: 700 !important;
+              font-size: 13px !important;
+              color: #000 !important;
+              box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+              white-space: nowrap !important;
+          }
+          .route-label::before {
+              display: none !important;
+          }
       </style>
       <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" 
               integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
@@ -56,7 +70,7 @@ export const generateAdminMapHTML = (editMode = false) => {
           });
 
           // Capa de tiles OpenStreetMap
-          const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          let tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
               attribution: '© OpenStreetMap contributors',
               maxZoom: 19,
               tileSize: 256,
@@ -75,12 +89,17 @@ export const generateAdminMapHTML = (editMode = false) => {
                                 try { window.map.removeLayer(tileLayer); } catch (e) { /* ignore */ }
                                 tileLayer = null;
                             }
-                            tileLayer = L.tileLayer(url, {
+                            const opts = {
                                 attribution: attribution || '',
                                 maxZoom: 19,
                                 tileSize: 256,
                                 crossOrigin: true
-                            }).addTo(window.map);
+                            };
+                            // si la URL contiene {s} usar subdominios por defecto
+                            if (url && url.indexOf('{s}') !== -1) {
+                                opts.subdomains = ['a','b','c'];
+                            }
+                            tileLayer = L.tileLayer(url, opts).addTo(window.map);
                             console.log('Tile layer cambiada a', url);
                         } catch (e) {
                             console.error('Error cambiando tile layer', e);
@@ -90,7 +109,8 @@ export const generateAdminMapHTML = (editMode = false) => {
           // Variables globales
           window.currentLocationMarker = null;
           window.searchMarkers = [];
-          window.transportRoutes = [];
+          // Mapear rutas por sourceId para control fino (visibilidad, highlight, click)
+          window.transportRouteLayers = {};
           window.routeLayer = null;
           window.originMarker = null;
           window.destinationMarker = null;
@@ -211,55 +231,121 @@ export const generateAdminMapHTML = (editMode = false) => {
           };
 
           // Funciones para rutas de transporte
-          window.addTransportRoute = function(coordinates, color, routeName) {
-              console.log('🚌 Agregando ruta admin:', routeName);
-              
-              window.clearTransportRoutes();
-              
-              const latLngCoords = coordinates.map(coord => [coord[1], coord[0]]);
-              
-              const route = L.polyline(latLngCoords, {
-                  color: color,
-                  weight: 4,
-                  opacity: 0.8,
-                  smoothFactor: 1.0
-              }).addTo(window.map);
-              
-              route.bindPopup(\`<b>\${routeName}</b><br>Ruta de transporte público\`);
-              window.transportRoutes.push(route);
-              
-              if (latLngCoords.length > 0) {
-                  const startPoint = latLngCoords[0];
-                  const endPoint = latLngCoords[latLngCoords.length - 1];
-                  
-                  const startIcon = L.divIcon({
-                      className: 'route-marker',
-                      html: \`<div style="background: \${color}; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">INICIO</div>\`,
-                      iconSize: [50, 20],
-                      iconAnchor: [25, 10]
+          // Añade una ruta de transporte. Firma: (coordinates, color, routeName, sourceId)
+          // sourceId es opcional pero recomendado para controlar visibilidad/selección.
+          window.addTransportRoute = function(coordinates, color, routeName, sourceId) {
+              try {
+                  console.log('🚌 Agregando ruta admin:', routeName, sourceId);
+
+                  const latLngCoords = coordinates.map(coord => [coord[1], coord[0]]);
+
+                  const route = L.polyline(latLngCoords, {
+                      color: color,
+                      weight: 4,
+                      opacity: 0.9,
+                      smoothFactor: 1.0
+                  }).addTo(window.map);
+
+                  // Agregar tooltip permanente con el nombre de la ruta
+                  route.bindTooltip(routeName, {
+                      permanent: true,
+                      direction: 'center',
+                      className: 'route-label',
+                      opacity: 0.95
                   });
-                  
-                  const endIcon = L.divIcon({
-                      className: 'route-marker',
-                      html: \`<div style="background: \${color}; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">FIN</div>\`,
-                      iconSize: [50, 20],
-                      iconAnchor: [25, 10]
+
+                  route.bindPopup('<b>' + routeName + '</b><br>Ruta de transporte público');
+
+                  // Añadir click handler para notificar a React Native
+                  route.on('click', function() {
+                      try {
+                          const id = sourceId || routeName || null;
+                          if (window.ReactNativeWebView) {
+                              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'routeClicked', id }));
+                          }
+                      } catch (e) { console.error('route click postMessage error', e); }
                   });
-                  
-                  const startMarker = L.marker(startPoint, {icon: startIcon}).addTo(window.map);
-                  const endMarker = L.marker(endPoint, {icon: endIcon}).addTo(window.map);
-                  
-                  window.transportRoutes.push(startMarker, endMarker);
+
+                  // Guardar en el map por sourceId si se proporciona, sino generar uno
+                  const id = sourceId || ('route_' + Date.now() + '_' + Math.floor(Math.random()*10000));
+                  window.transportRouteLayers[id] = window.transportRouteLayers[id] || { layers: [] };
+                  window.transportRouteLayers[id].layers.push(route);
+
+                  if (latLngCoords.length > 0) {
+                      const startPoint = latLngCoords[0];
+                      const endPoint = latLngCoords[latLngCoords.length - 1];
+
+                      const startIcon = L.divIcon({
+                          className: 'route-marker',
+                          html: '<div style="background: ' + color + '; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">INICIO</div>',
+                          iconSize: [50, 20],
+                          iconAnchor: [25, 10]
+                      });
+
+                      const endIcon = L.divIcon({
+                          className: 'route-marker',
+                          html: '<div style="background: ' + color + '; color: white; padding: 4px 8px; border-radius: 10px; font-size: 10px; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3);">FIN</div>',
+                          iconSize: [50, 20],
+                          iconAnchor: [25, 10]
+                      });
+
+                      const startMarker = L.marker(startPoint, {icon: startIcon}).addTo(window.map);
+                      const endMarker = L.marker(endPoint, {icon: endIcon}).addTo(window.map);
+
+                      window.transportRouteLayers[id].layers.push(startMarker, endMarker);
+                  }
+
+                  // Ajuste opcional de z-index/visibilidad
+                  console.log('✅ Ruta admin agregada id=', id, routeName);
+                  return id;
+              } catch (err) {
+                  console.error('Error en addTransportRoute', err);
               }
-              
-              console.log('✅ Ruta admin agregada:', routeName);
           };
 
           window.clearTransportRoutes = function() {
-              window.transportRoutes.forEach(item => {
-                  window.map.removeLayer(item);
+              Object.keys(window.transportRouteLayers).forEach(id => {
+                  const entry = window.transportRouteLayers[id];
+                  if (entry && entry.layers) {
+                      entry.layers.forEach(layer => {
+                          try { window.map.removeLayer(layer); } catch (e) { /* ignore */ }
+                      });
+                  }
               });
-              window.transportRoutes = [];
+              window.transportRouteLayers = {};
+          };
+
+          // Controlar visibilidad por id (true = visible, false = oculto)
+          window.setRouteVisibility = function(routeId, visible) {
+              try {
+                  const entry = window.transportRouteLayers[routeId];
+                  if (!entry) return;
+                  entry.layers.forEach(layer => {
+                      if (visible) {
+                          if (!window.map.hasLayer(layer)) window.map.addLayer(layer);
+                      } else {
+                          if (window.map.hasLayer(layer)) window.map.removeLayer(layer);
+                      }
+                  });
+              } catch (e) { console.error('setRouteVisibility error', e); }
+          };
+
+          // Resaltar / quitar resalte de una ruta (ajusta grosor y la trae al frente)
+          window.setRouteHighlighted = function(routeId, highlighted) {
+              try {
+                  const entry = window.transportRouteLayers[routeId];
+                  if (!entry) return;
+                  entry.layers.forEach(layer => {
+                      if (layer instanceof L.Polyline) {
+                          if (highlighted) {
+                              layer.setStyle({ weight: 7, opacity: 1.0 });
+                              if (layer.bringToFront) layer.bringToFront();
+                          } else {
+                              layer.setStyle({ weight: 4, opacity: 0.9 });
+                          }
+                      }
+                  });
+              } catch (e) { console.error('setRouteHighlighted error', e); }
           };
 
           window.centerMap = function(lng, lat, zoom = 13) {

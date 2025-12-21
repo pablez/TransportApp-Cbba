@@ -28,6 +28,7 @@ import PaymentScreen from '../screens/user/PaymentScreen';
 import SimpleTestScreen from '../screens/tests/SimpleTestScreen';
 import EditProfileScreen from '../screens/user/EditProfileScreen';
 import RouteSearchScreen from '../screens/search/RouteSearchScreen';
+import RouteMapTest from '../screens/RouteMapTest';
 
 const Drawer = createDrawerNavigator();
 
@@ -225,6 +226,7 @@ const AppNavigator = () => {
     options={{ drawerItemStyle: { display: 'none' } }} 
   />
   <Drawer.Screen name="Register" component={RegisterScreen} />
+  <Drawer.Screen name="RouteMapTest" component={RouteMapTest} options={{ drawerItemStyle: { display: 'none' } }} />
 
         {/* Pantallas para usuarios autenticados */}
         {user && (

@@ -1,25 +1,37 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import TileLayerSelector, { TILE_STYLES } from './TileLayerSelector';
 
 const AdminMapControls = ({ 
   location, 
-  onCenterLocation 
+  onCenterLocation,
+  changeTileLayer,
+  mapStyle,
 }) => {
   return (
     <View style={styles.controlsContainer}>
-      <View style={styles.bottomControls}>
+      <View style={styles.topControlsRow}>
+        {/* zoom controls removed per request */}
+
         <TouchableOpacity 
           style={[styles.controlButton, !location && styles.controlButtonDisabled]} 
           onPress={onCenterLocation}
           disabled={!location}
+          accessible={true}
+          accessibilityRole="button"
+          accessibilityLabel="Centrar en mi ubicación"
+          accessibilityHint="Centra el mapa en la ubicación GPS actual"
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Ionicons name="locate" size={18} color="#fff" />
           <Text style={styles.controlButtonText}>
             {location ? 'Mi Ubicación' : 'Buscando GPS...'}
           </Text>
         </TouchableOpacity>
-        
+      </View>
+
+      <View style={styles.locationRow}>
         <Text style={styles.locationText}>
           {location 
             ? `📍 ${location.latitude.toFixed(4)}, ${location.longitude.toFixed(4)}`
@@ -29,17 +41,17 @@ const AdminMapControls = ({
       </View>
 
       {/* Map type selector will be injected by parent when provided via props */}
-      {typeof arguments[0] === 'object' && arguments[0].changeTileLayer ? (
-        <View style={styles.mapTypeRow}>
-          <TouchableOpacity style={[styles.mapTypeButton, arguments[0].mapStyle === 'standard' && styles.mapTypeButtonActive]} onPress={() => arguments[0].changeTileLayer('standard')}>
-            <Text style={[styles.mapTypeText, arguments[0].mapStyle === 'standard' && styles.mapTypeTextActive]}>Estándar</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.mapTypeButton, arguments[0].mapStyle === 'cyclo' && styles.mapTypeButtonActive]} onPress={() => arguments[0].changeTileLayer('cyclo')}>
-            <Text style={[styles.mapTypeText, arguments[0].mapStyle === 'cyclo' && styles.mapTypeTextActive]}>Ciclista</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.mapTypeButton, arguments[0].mapStyle === 'transport' && styles.mapTypeButtonActive]} onPress={() => arguments[0].changeTileLayer('transport')}>
-            <Text style={[styles.mapTypeText, arguments[0].mapStyle === 'transport' && styles.mapTypeTextActive]}>Transporte</Text>
-          </TouchableOpacity>
+      {changeTileLayer ? (
+        <View style={styles.tileSelectorRow}>
+          <TileLayerSelector mapStyle={mapStyle} onChangeTileLayer={changeTileLayer} />
+          <View style={styles.tilePreviews} accessible={true} accessibilityLabel="Previsualización de capas">
+            {Object.keys(TILE_STYLES).map(key => (
+              <TouchableOpacity key={key} onPress={() => changeTileLayer(key)} style={[styles.previewItem, mapStyle === key && styles.previewItemActive]} accessibilityRole="button" accessibilityLabel={`Previsualizar ${key}`} accessibilityHint={`Seleccionar capa ${key}`}> 
+                <View style={[styles.previewSwatch, mapStyle === key && styles.previewSwatchActive]} />
+                <Text style={styles.previewLabel}>{key}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       ) : null}
     </View>
@@ -116,6 +128,44 @@ const styles = StyleSheet.create({
   },
   mapTypeTextActive: {
     color: '#fff'
+  },
+  topControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  locationRow: {
+    marginBottom: 8,
+  },
+  tileSelectorRow: {
+    marginTop: 6,
+  },
+  tilePreviews: {
+    flexDirection: 'row',
+    marginTop: 8,
+  },
+  previewItem: {
+    alignItems: 'center',
+    marginRight: 8,
+  },
+  previewItemActive: {
+    opacity: 1,
+  },
+  previewSwatch: {
+    width: 48,
+    height: 32,
+    borderRadius: 6,
+    backgroundColor: '#e0e0e0',
+  },
+  previewSwatchActive: {
+    borderWidth: 2,
+    borderColor: '#1976D2',
+  },
+  previewLabel: {
+    fontSize: 11,
+    marginTop: 4,
+    textTransform: 'capitalize',
   },
 });
 

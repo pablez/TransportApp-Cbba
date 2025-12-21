@@ -72,7 +72,8 @@
     "extra": {
       "eas": {
         "projectId": "7259b013-82f4-4112-8a1f-d8feed9a6251"
-      }
+      },
+      "ORS_API_KEY": "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjliYzhiZDJmY2RjMTQxNzRhZGRkM2UyZDUyNWRhYmJiIiwiaCI6Im11cm11cjY0In0="
     }
   }
 }

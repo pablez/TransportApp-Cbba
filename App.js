@@ -3,6 +3,7 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, View } from 'react-native';
 import { AuthProvider } from './src/context/AuthContext';
 import AppNavigator from './src/navigation/AppNavigator';
+import { SnackbarProvider } from './src/components/ui/SnackbarProvider';
 
 // Suprimir advertencias conocidas
 import './src/utils/WarningSuppress';
@@ -10,10 +11,12 @@ import './src/utils/WarningSuppress';
 export default function App() {
   return (
     <AuthProvider>
-      <View style={styles.container}>
-        <StatusBar style="auto" />
-        <AppNavigator />
-      </View>
+      <SnackbarProvider>
+        <View style={styles.container}>
+          <StatusBar style="auto" />
+          <AppNavigator />
+        </View>
+      </SnackbarProvider>
     </AuthProvider>
   );
 }
